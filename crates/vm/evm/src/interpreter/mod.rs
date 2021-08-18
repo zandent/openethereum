@@ -386,7 +386,12 @@ impl<Cost: CostType> Interpreter<Cost> {
                         }))
                     }
                 };
-
+                ////////////////////////////////////////////////////
+                // Flash loan projects
+                //TODO: print for debugging. remove when project ends
+                println!("exec instr: {:?}", instruction);
+                // Flash loan projects
+                ////////////////////////////////////////////////////
                 let info = instruction.info();
                 self.last_stack_ret_len = info.ret;
                 if let Err(e) = self.verify_instruction(ext, instruction, info) {
@@ -871,6 +876,11 @@ impl<Cost: CostType> Interpreter<Cost> {
 
                         self.stack.push(U256::one());
                         self.return_data = data;
+                        ////////////////////////////////////////////////////
+                        // Flash loan projects
+                        println!("ETH transaction occurred: from {:?} to {:?}", ext.balance(&sender_address)?, ext.balance(&receive_address)?);
+                        // Flash loan projects
+                        ////////////////////////////////////////////////////
                         Ok(InstructionResult::UnusedGas(
                             Cost::from_u256(gas_left)
                                 .expect("Gas left cannot be greater than current one"),

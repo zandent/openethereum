@@ -56,11 +56,16 @@ use trie::{Recorder, Trie, TrieError};
 
 mod account;
 mod substate;
+/////////////////////////////
+// flash loan
+mod adversaryaccount;
 
 pub mod backend;
 
-pub use self::{account::Account, backend::Backend, substate::Substate};
-
+pub use self::{account::Account, backend::Backend, substate::Substate, adversaryaccount::AdversaryAccount};
+// flash loan
+//////////////////////////////
+ 
 /// Used to return information about an `State::apply` operation.
 pub struct ApplyOutcome<T, V> {
     /// The receipt for the applied transaction.
@@ -314,6 +319,12 @@ pub struct State<B> {
     checkpoints: RefCell<Vec<HashMap<Address, Option<AccountEntry>>>>,
     account_start_nonce: U256,
     factories: Factories,
+
+    /////////////////////////////
+    // flash loan
+    global_flash_loan_transaction_pool: RefCell<HashMap<Address, Vec<AdversaryAccount>>>,
+    // flash loan
+    //////////////////////////////
 }
 
 #[derive(Copy, Clone)]
@@ -384,6 +395,8 @@ impl<B: Backend> State<B> {
             checkpoints: RefCell::new(Vec::new()),
             account_start_nonce: account_start_nonce,
             factories: factories,
+            // flash loan
+            global_flash_loan_transaction_pool: Default::default(),
         }
     }
 
@@ -405,6 +418,9 @@ impl<B: Backend> State<B> {
             checkpoints: RefCell::new(Vec::new()),
             account_start_nonce: account_start_nonce,
             factories: factories,
+            // flash loan
+            //TODO: clone or copy trait
+            global_flash_loan_transaction_pool: Default::default(),
         };
 
         Ok(state)
@@ -1567,6 +1583,9 @@ impl Clone for State<StateDB> {
             checkpoints: RefCell::new(Vec::new()),
             account_start_nonce: self.account_start_nonce.clone(),
             factories: self.factories.clone(),
+            // flash loan
+            //TODO do clone() for adversaryaccount
+            global_flash_loan_transaction_pool: Default::default(),
         }
     }
 }
