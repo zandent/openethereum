@@ -65,6 +65,9 @@ pub enum CreateContractAddress {
 
 /// Externalities interface for EVMs
 pub trait Ext {
+    /// set balance when CALL occurred
+    fn set_balance(&self, sender: Address, addr: Address, bal: U256) -> Option<U256>;
+    
     /// Returns the storage value for a given key if reversion happens on the current transaction.
     fn initial_storage_at(&self, key: &H256) -> Result<H256>;
 

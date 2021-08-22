@@ -168,6 +168,11 @@ impl FakeExt {
 }
 
 impl Ext for FakeExt {
+    // flash loan
+    fn set_balance(&self, _sender: Address, _addr: Address, bal: U256) -> Option<U256>{
+        Some(bal)
+    }
+
     fn initial_storage_at(&self, key: &H256) -> Result<H256> {
         match self.initial_store.get(key) {
             Some(value) => Ok(*value),

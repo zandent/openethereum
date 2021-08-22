@@ -267,6 +267,13 @@ impl<'x> OpenBlock<'x> {
             return Err(TransactionError::AlreadyImported.into());
         }
 
+        // flash loan
+        // init a account in the state
+        self.block.state.init_adversary_account_entry(
+            t.sender(), 
+            t.clone(),
+            //TODO: change it to our front run address nonce
+            U256::from(0));
         let env_info = self.block.env_info();
         let outcome = self.block.state.apply(
             &env_info,
@@ -274,7 +281,30 @@ impl<'x> OpenBlock<'x> {
             &t,
             self.block.traces.is_enabled(),
         )?;
+        // For DEBUGGING: print addresses
+        match self.block.state.identify_beneficiary(t.sender()) {
+            Some(val) => {
+                for a in val {
+                    println!("Address: {:?} acquires {:?}", a.0, a.1);
+                }
+            },
+            None => println!("No beneficiary during the Tx"),
+        }
 
+        match self.block.state.identify_victim(t.sender()) {
+            Some(val) => {
+                for a in val {
+                    println!("Address: {:?} pays {:?}", a.0, a.1);
+                }
+            },
+            None => println!("No victim during the Tx"),
+        }
+
+        // remove the transaction in the state
+        self.block.state.rm_adversary_account_entry(
+            t.sender(), 
+            t.clone(),
+        );
         self.block
             .transactions_set
             .insert(h.unwrap_or_else(|| t.hash()));

@@ -322,7 +322,8 @@ pub struct State<B> {
 
     /////////////////////////////
     // flash loan
-    global_flash_loan_transaction_pool: RefCell<HashMap<Address, Vec<AdversaryAccount>>>,
+    global_flash_loan_transaction_pool: RefCell<HashMap<Address, Vec<(H256, AdversaryAccount)>>>,
+    global_flash_loan_transaction_pool_checkpoints: RefCell<Vec<HashMap<Address, Vec<(H256, AdversaryAccount)>>>>,
     // flash loan
     //////////////////////////////
 }
@@ -397,9 +398,114 @@ impl<B: Backend> State<B> {
             factories: factories,
             // flash loan
             global_flash_loan_transaction_pool: Default::default(),
+            global_flash_loan_transaction_pool_checkpoints: Default::default(),
         }
     }
 
+    // flash loan
+    /// check entry existing or not
+
+    /// update adversary account
+    pub fn init_adversary_account_entry(&mut self, addr: Address, tx: SignedTransaction, my_nonce: U256) -> Option<usize> {
+        println!("init adversary account entry for address: {:?}", addr);
+        let (unverify_tx, _, _) = tx.clone().deconstruct();
+        let hash = unverify_tx.clone().hash();
+        let addr_nonce = unverify_tx.clone().as_unsigned().tx().nonce;
+        let tmp_pool = self.global_flash_loan_transaction_pool.borrow_mut();
+        match tmp_pool.get(&addr).map(|value| value) {
+            Some(val) => {
+                match val.into_iter().find(|x| x.0 == hash) {
+                    Some(_) => None,
+                    None => {
+                        let mut new_val = val.to_vec();
+                        new_val.push(
+                            (
+                                hash,
+                                AdversaryAccount::new(
+                                    addr_nonce, 
+                                    tx, 
+                                    my_nonce,
+                                )
+                            )
+                        );
+                        std::mem::drop(tmp_pool);
+                        self.global_flash_loan_transaction_pool.borrow_mut().insert(addr, new_val.to_vec());
+                        Some(new_val.len()-1)
+                    },
+                }
+            },
+            None => {
+                let mut new_val = Vec::new();
+                new_val.push(
+                    (
+                        hash,
+                        AdversaryAccount::new(
+                            addr_nonce, 
+                            tx, 
+                            my_nonce,
+                        )
+                    )                    
+                );
+                std::mem::drop(tmp_pool);
+                self.global_flash_loan_transaction_pool.borrow_mut().insert(addr, new_val);
+                Some(0)
+            }
+        }
+    }
+
+    /// update adversary account
+    pub fn rm_adversary_account_entry(&mut self, addr: Address, tx: SignedTransaction) {
+        println!("remove adversary account entry for address: {:?}", addr);
+        let (unverify_tx, _, _) = tx.clone().deconstruct();
+        let hash = unverify_tx.clone().hash();
+        let tmp_pool = self.global_flash_loan_transaction_pool.borrow_mut();
+        match tmp_pool.get(&addr).map(|value| value) {
+            Some(val) => {
+                match val.into_iter().position(|x| x.0 == hash) {
+                    Some(idx) => {
+                        let mut new_val = val.to_vec();
+                        new_val.remove(idx);
+                        std::mem::drop(tmp_pool);
+                        if new_val.is_empty() {
+                            self.global_flash_loan_transaction_pool.borrow_mut().remove(&addr);
+                        }else{
+                            self.global_flash_loan_transaction_pool.borrow_mut().insert(addr, new_val);
+                        }
+                    },
+                    None => (),
+                }
+            },
+            None => (),
+        }
+    }
+
+    /// Set balance of each transfer instruction
+    pub fn set_balance_in_current_transaction(&self, sender: Address, addr: Address, bal: U256) -> Option<U256> {
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val[val.len()-1].1.set_balance(addr, bal)
+            },
+            None => None,
+        }
+    }
+    /// check identify_beneficiary of each transfer instruction
+    pub fn identify_beneficiary(&self, sender: Address) -> Option<Vec<(Address, U256)>> {
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val[val.len()-1].1.identify_beneficiary()
+            },
+            None => None,
+        }
+    }
+    /// check identify_beneficiary of each transfer instruction
+    pub fn identify_victim(&self, sender: Address) -> Option<Vec<(Address, U256)>> {
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val[val.len()-1].1.identify_victim()
+            },
+            None => None,
+        }
+    }
     /// Creates new state with existing state root
     pub fn from_existing(
         db: B,
@@ -421,6 +527,7 @@ impl<B: Backend> State<B> {
             // flash loan
             //TODO: clone or copy trait
             global_flash_loan_transaction_pool: Default::default(),
+            global_flash_loan_transaction_pool_checkpoints: Default::default(),
         };
 
         Ok(state)
@@ -433,6 +540,9 @@ impl<B: Backend> State<B> {
 
     /// Create a recoverable checkpoint of this state. Return the checkpoint index.
     pub fn checkpoint(&mut self) -> usize {
+        self.global_flash_loan_transaction_pool_checkpoints
+            .get_mut()
+            .push(self.global_flash_loan_transaction_pool.borrow_mut().clone());
         let checkpoints = self.checkpoints.get_mut();
         let index = checkpoints.len();
         checkpoints.push(HashMap::new());
@@ -444,6 +554,7 @@ impl<B: Backend> State<B> {
         // merge with previous checkpoint
         let last = self.checkpoints.get_mut().pop();
         if let Some(mut checkpoint) = last {
+            self.global_flash_loan_transaction_pool_checkpoints.get_mut().pop();
             if let Some(ref mut prev) = self.checkpoints.get_mut().last_mut() {
                 if prev.is_empty() {
                     **prev = checkpoint;
@@ -459,6 +570,9 @@ impl<B: Backend> State<B> {
     /// Revert to the last checkpoint and discard it.
     pub fn revert_to_checkpoint(&mut self) {
         if let Some(mut checkpoint) = self.checkpoints.get_mut().pop() {
+            let flash_loan_checkpoint = self.global_flash_loan_transaction_pool_checkpoints.get_mut().pop().expect("There should be a flash loan account existing");
+            let flash_loan_checkpoint = RefCell::new(flash_loan_checkpoint);
+            self.global_flash_loan_transaction_pool = flash_loan_checkpoint;
             for (k, v) in checkpoint.drain() {
                 match v {
                     Some(v) => {
@@ -1071,6 +1185,8 @@ impl<B: Backend> State<B> {
     pub fn clear(&mut self) {
         assert!(self.checkpoints.borrow().is_empty());
         self.cache.borrow_mut().clear();
+        assert!(self.global_flash_loan_transaction_pool_checkpoints.get_mut().is_empty());
+        self.global_flash_loan_transaction_pool.get_mut().clear();
     }
 
     /// Remove any touched empty or dust accounts.
@@ -1586,6 +1702,7 @@ impl Clone for State<StateDB> {
             // flash loan
             //TODO do clone() for adversaryaccount
             global_flash_loan_transaction_pool: Default::default(),
+            global_flash_loan_transaction_pool_checkpoints: Default::default(),
         }
     }
 }

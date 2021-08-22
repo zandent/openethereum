@@ -119,6 +119,9 @@ where
     V: VMTracer,
     B: StateBackend,
 {
+    fn set_balance(&self, sender: Address, addr: Address, bal: U256) -> Option<U256> {
+        self.state.set_balance_in_current_transaction(sender, addr, bal)
+    }
     fn initial_storage_at(&self, key: &H256) -> vm::Result<H256> {
         if self
             .state

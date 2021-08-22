@@ -852,6 +852,12 @@ impl<Cost: CostType> Interpreter<Cost> {
                     return Ok(InstructionResult::UnusedGas(call_gas));
                 }
 
+                // flash loan
+                // set balance before running CALL
+                println!("Potential ETH transaction will occur: from {:?} ({:?}) to {:?} ({:?})", 
+                sender_address, ext.balance(&sender_address)?, receive_address, ext.balance(&receive_address)?);
+                ext.set_balance(self.params.sender, *sender_address, ext.balance(&sender_address)?);
+                ext.set_balance(self.params.sender, *receive_address, ext.balance(&receive_address)?);
                 let call_result = {
                     let input = self.mem.read_slice(in_off, in_size);
                     ext.call(
@@ -868,6 +874,14 @@ impl<Cost: CostType> Interpreter<Cost> {
 
                 self.resume_output_range = Some((out_off, out_size));
 
+                ////////////////////////////////////////////////////
+                // Flash loan projects
+                println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
+                sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
+                ext.set_balance(self.params.sender, *sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()));
+                ext.set_balance(self.params.sender, *receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
+                // Flash loan projects
+                ////////////////////////////////////////////////////
                 return match call_result {
                     Ok(MessageCallResult::Success(gas_left, data)) => {
                         let output = self.mem.writeable_slice(out_off, out_size);
@@ -876,11 +890,6 @@ impl<Cost: CostType> Interpreter<Cost> {
 
                         self.stack.push(U256::one());
                         self.return_data = data;
-                        ////////////////////////////////////////////////////
-                        // Flash loan projects
-                        println!("ETH transaction occurred: from {:?} to {:?}", ext.balance(&sender_address)?, ext.balance(&receive_address)?);
-                        // Flash loan projects
-                        ////////////////////////////////////////////////////
                         Ok(InstructionResult::UnusedGas(
                             Cost::from_u256(gas_left)
                                 .expect("Gas left cannot be greater than current one"),
