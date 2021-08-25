@@ -1,0 +1,609 @@
+https://etherscan.io/tx/0xb1b3c24109f38dd229b2e5242c9c325203faf14a4d8aa70299e904b946bd98e5
+Step: 1
+From 0x0000000000d41c96294ccdac8612bdfe29c641af To Uniswap V2: CWAP For 3.626527579574736162  (WETH)
+Step: 2
+From Uniswap V2: CWAP To 0x0000000000d41c96294ccdac8612bdfe29c641af For 6,057.536871849883224441 deFIRE (CWAP) 
+1/205
+Token Transfer: 1https://etherscan.io/tx/0x063022bf2a4b20277bb3d2a694a6b8c42dfd463d908a49d61046846c308b546a
+Step: 1
+From Uniswap V2: Router 2 To Uniswap V2: CWAP For 1  (WETH)
+Step: 2
+From Uniswap V2: CWAP To 0x74516637f8f2ba9d3c3090571f85ee4e9fe5d044 For 1,572.66469293812849386 deFIRE (CWAP) 
+2/205
+Token Transfer: 2https://etherscan.io/tx/0xac891f53955cb856b402131fab6713313d9f6e8aa6ec423d398498d12a9a875a
+Step: 1
+From 0x0000000000d41c96294ccdac8612bdfe29c641af To Uniswap V2: CWAP For 6,057.536871849883224441 deFIRE (CWAP) 
+Step: 2
+From Uniswap V2: CWAP To 0x0000000000d41c96294ccdac8612bdfe29c641af For 3.696450180872679856  (WETH)
+3/205
+Token Transfer: 3https://etherscan.io/tx/0x5030ca893dc7c37828350aeb6c4fb14cd1a64501f1150615fd0e4a047d8cbca0
+Step: 1
+From 0x6f2548b1bee178a49c8ea09be6845f6aeaf3e8da To 0x44df7f713470354654fc7dcf5d6b380abce7fe96 For 60 Minds (MINDS) 
+4/205
+Token Transfer: 4https://etherscan.io/tx/0xf50f6feb3b3667387533d60083ceccd5d0ab548b567d1b43ce49012012590651
+Step: 1
+From FTX Exchange To 0x6ef5942bdd818fcbcb2864802150985c52309243 For 4,797 Serum (SRM)
+5/205
+Token Transfer: 5https://etherscan.io/tx/0x14f5b730f82b793a8c96be79f2e567c227d6bbbf346eba2ed220cdfe36a5f377
+Step: 1
+From 0x6cf71126c26f740cf137bfa2885d899ff971a940 To 0x7abe0ce388281d2acf297cb089caef3819b13448 For 10,987.98834986 Graph Token (GRT)
+6/205
+Token Transfer: 6https://etherscan.io/tx/0x4cb7c6874c7d241a346ed1e5a6231291a038d48e807c8a85998809314cfd1101
+Step: 1
+From Binance 15 To 0x5004a3fdb7ea4b1c0bd4241fe2c7fd3444087402 For 320.2414 DATAcoin (DATA)
+7/205
+Token Transfer: 7https://etherscan.io/tx/0x51c125218dc9a16943b01e7a293602af9d67572719957813576bd33a5e4300f4
+8/205
+Token Transfer: 7https://etherscan.io/tx/0x990f2f33197f0a2b148a1cdc5e3a9f95934ded238649d7eebea8c1f04edb8c99
+Step: 1
+From Binance 16 To 0x616c405bca4a5ee660eed84007a36ab702adbd3d For 7,235.279746 USD Coin (USDC)
+9/205
+Token Transfer: 8https://etherscan.io/tx/0x3daabdd0b92d646113f0c80ca8253a419c5eba98552b742b6777e6b3be5bcf48
+10/205
+Token Transfer: 8https://etherscan.io/tx/0x72702618026d8921fb140704537ba737336b8bf64f0be9f3d5ba8784512bac48
+11/205
+Token Transfer: 8https://etherscan.io/tx/0xf963bf9fb011441fcee570e8a4caf4b60c38bf181f78e6f581fef8b50089d2f7
+Step: 1
+From Binance 14 To 0xb3e558c6fd2f8be5557e1d20278a11b5999abe59 For 485.028571 Tether USD (USDT)
+12/205
+Token Transfer: 9https://etherscan.io/tx/0x06d6c55fa70b4f5544c584cb408362bc937910daecf71d2bc08a0353cab0672e
+13/205
+Token Transfer: 9https://etherscan.io/tx/0x2941822f533b1c25785ef94d7db97e137785e0bdb0a3fc718ea002ffc2226cac
+14/205
+Token Transfer: 9https://etherscan.io/tx/0x04f7644c9718af63144862199e03b36a96ff127fa4eeffeec8d3e5af61c89860
+Step: 1
+From Binance 18 To 0x1f5d77e347ca13c63818bc6eb66188a0883c0baa For 116.868451 Tether USD (USDT)
+15/205
+Token Transfer: 10https://etherscan.io/tx/0x86433111e724c70291ee40adb079d0d212e84c746dcf14603c85030431cef476
+16/205
+Token Transfer: 10https://etherscan.io/tx/0xc7bbb39a89975e67e2397afdff7a59dd81aec89139f6614ccbf96f442bebf28e
+Step: 1
+From Binance 14 To 0x783c97047bad9e0b55a33f46c2ac3a968e217259 For 485 USD Coin (USDC)
+17/205
+Token Transfer: 11https://etherscan.io/tx/0xe7afd7770df8080e0317f107ebbb81f44493e83b6cb01fdd924a88b798400a3b
+Step: 1
+From Binance 16 To 0x9bdcfcd6b4b4403a457fb68fd6130da07b422669 For 29,278.517839 Tether USD (USDT)
+18/205
+Token Transfer: 12https://etherscan.io/tx/0xf24a52b1b6989f42de535e198ab382d04699c6324333986ab897af9f29726da9
+Step: 1
+From Binance 15 To 0x09c1767cbd478cc3ba666d2483bcea3a02b6213d For 0.401  (FARM)
+19/205
+Token Transfer: 13https://etherscan.io/tx/0x2fb11c6236e1a5a40f9f54934ae2dbcc212c4cc45c7a45965a9192cd1ba08a39
+20/205
+Token Transfer: 13https://etherscan.io/tx/0xc43dd1dffd5b3bdce13739281e5fdb8ecc1301d0e2dd85389c7d68e154f7d8d4
+Step: 1
+From Binance 15 To 0x9f9a89529d318152fbd09a28f0ad688d44bbc36c For 860.10748 Tether USD (USDT)
+21/205
+Token Transfer: 14https://etherscan.io/tx/0x8f2659671d947137facc8cb111f9f205f80d9dd05f8d5bd9b21bc8f69df40a7d
+22/205
+Token Transfer: 14https://etherscan.io/tx/0x7b2f38d2989196bd9013ff268efb21228bb1370d920d0e02a2c3e8eb3d10afc0
+23/205
+Token Transfer: 14https://etherscan.io/tx/0x7837e0b29c4b54169dcd43a2d1b4c68aac5b07021ecc31c6f69809ea3b6aa22e
+Step: 1
+From Binance 14 To 0x0353cefb5fea80480903fe722d4299294eba1286 For 159.470355 Tether USD (USDT)
+24/205
+Token Transfer: 15https://etherscan.io/tx/0xc699a4c9985b1e0c1fe36a27483ba6e7fcf8c9ad8bb06d48edbf759ff2f98344
+25/205
+Token Transfer: 15https://etherscan.io/tx/0x2095a12aba8e19dcceb34d9baf63b99a8d7da10c6fad2e5f76a5fc029d9a7ade
+26/205
+Token Transfer: 15https://etherscan.io/tx/0x73c5b363acc95b9a09d5753c38cb6daf6bf59b34f8194c376fe85ff5afd7444a
+27/205
+Token Transfer: 15https://etherscan.io/tx/0x77b1fbd35e30f539384649e6db5341e0a51c6e221c1f0fcb4886ddf14fc6374b
+28/205
+Token Transfer: 15https://etherscan.io/tx/0xd244906b65a87761c93cab58426d40096475891bc0a75ad9aa4f08454ec0213a
+29/205
+Token Transfer: 15https://etherscan.io/tx/0xc5d6c4d1519b9702f64ee1b3efce40d1d85d368abb890d5f441aee461c48e768
+Step: 1
+From 1inch V3 To Uniswap V2: AGIX For 0.28  (WETH)
+Step: 2
+From Uniswap V2: AGIX To 0xf89c09b767cc4d531304d25ac94eb4733217cf8b For 3,049.41433258  (AGIX)
+30/205
+Token Transfer: 16https://etherscan.io/tx/0xf020d7c76f63fa4e0e39bbd971e7d28c7aba59bac05135e17e1f8a425b3e9914
+Step: 1
+From 1inch V3 To Uniswap V2: AGIX For 0.27  (WETH)
+Step: 2
+From Uniswap V2: AGIX To 0x24b5f2d24a459da689637f5aa9daf42c9bab91f9 For 2,937.69715657  (AGIX)
+31/205
+Token Transfer: 17https://etherscan.io/tx/0x60555ee3bf09c8f52c3283ea495a1eaed81b585b1bcfbf2bf2e2c23daa35f8f8
+32/205
+Token Transfer: 17https://etherscan.io/tx/0x06d0f2a255a96dbce32644f6b93d8228b6c27f5397d998f4c210b14101f106b5
+33/205
+Token Transfer: 17https://etherscan.io/tx/0xe80b8960499a605eeabed7a57f67ff186a05d59b9b52db960467a27f75c22024
+Step: 1
+From 0xf60c2ea62edbfe808163751dd0d8693dcb30019c To 0x75ef834af3f04039e70531a3e236c9514b8801ed For 74.912 OMG Network (OMG)
+34/205
+Token Transfer: 18https://etherscan.io/tx/0x418d60bd35f0f36e0ca98fd3089c91fec290b758903e08bc4bacf738f6c331dc
+Step: 1
+From 0x5ab9d116a53ef41063e3eae26a7ebe736720e9ba To Uniswap V2: ALBT-USDT For 6,175.627213 Tether USD (USDT)
+Step: 2
+From Uniswap V2: ALBT-USDT To 0x44fbbed7f759f5d6c9728d11d7ccffaf7232f8d0 For 6,460.83097591589912896  (ALBT) 
+35/205
+Token Transfer: 19https://etherscan.io/tx/0xbdc9138aa3442d456b6d9c2e7feb8e54da5b30c67bdb7586ec43cca8681f26fa
+36/205
+Token Transfer: 19https://etherscan.io/tx/0x9fc03baddb9a95d7eacb46cd62dbdaf169f0ffce099424e3006799f6cb5d1c49
+37/205
+Token Transfer: 19https://etherscan.io/tx/0x48c25d9d1973ea61a68d344410a274ab03561bcebf3ff143541712c811c3a103
+38/205
+Token Transfer: 19https://etherscan.io/tx/0x53eae48d0528548b0d63d5e1c8ab4f56d8c067fb344bd9ee80d7a982e7ffedfe
+39/205
+Token Transfer: 19https://etherscan.io/tx/0x1c513c0fd8c7cf2b08ab7f689073da072f62362952c14788cd79b5d46faba708
+40/205
+Token Transfer: 19https://etherscan.io/tx/0x3a8e1224eab06a44aed9de2a7e998d503e2b0bda6263847c2ea057e42b9c3151
+41/205
+Token Transfer: 19https://etherscan.io/tx/0x1012f39751c26193716fd7f7bbb170d64483a3f4e09c971c18e471785a29dcc4
+Step: 1
+From Hop Exchange: Bridge To 0xbdeaf7d15c6d7a7a528f1870afcd3c57b101abf5 For 19,932.155149 USD Coin (USDC)
+Step: 2
+From Hop Exchange: Bridge To Hop Protocol: Bonders For 43.232589 USD Coin (USDC)
+42/205
+Token Transfer: 20https://etherscan.io/tx/0xcd9e143164da4f1c5dd6381d9c3f9fe200ff5ad0d4a8d169f48f289438d72cba
+43/205
+Token Transfer: 20https://etherscan.io/tx/0xa8c0338b7a7a14b9f2bb07950e62397e025bf73e07d3aa40b9804538f4b8db00
+Step: 1
+From KuCoin 3 To 0x1c7c68706ded1a6cce650e9f0858978116d5a09c For 300 USD Coin (USDC)
+44/205
+Token Transfer: 21https://etherscan.io/tx/0x8c9dd928e616997c82da2ea0fa9d98c0c97bdbd0fd5b1664838e60f239b7fa0c
+Step: 1
+From 0xa083d779e9188d71b4eefd47551bbc6611b20c66 To KuCoin 3 For 23,500 VERA (VRA) 
+45/205
+Token Transfer: 22https://etherscan.io/tx/0x05549c227e2c6ec0d2703ddc9a79ce9dba508b02aedcce4708495806f3eddd41
+Step: 1
+From 0xc6bed363b30df7f35b601a5547fe56cd31ec63da To 0xb35f620bf986a878403ccb595ff78883c90c84fe For 2.74721  (LINK)
+46/205
+Token Transfer: 23https://etherscan.io/tx/0xc9e1c1538153d4200a53cca57cbf4c93d93f8dc3e3641c44029d7ac84b42b64d
+47/205
+Token Transfer: 23https://etherscan.io/tx/0x75abf2a86a03f4b1ad87fc969fecee2b0e122ffe0c8b779308af6815d7bde6b3
+48/205
+Token Transfer: 23https://etherscan.io/tx/0x40d01cbe73a82841b8f4f8f8eafdd93242277fd33eb56316ad4a39dc6c02ad52
+Step: 1
+From 0xfdbaa5eee7cdf45eec3a71a672065a67191fda7a To Uniswap V2: UNO 15 For 8,377.69 UnoRe (UNO) 
+Step: 2
+From Uniswap V2: UNO 15 To Uniswap V2: Router 2 For 0.793236470328782969  (WETH)
+49/205
+Token Transfer: 24https://etherscan.io/tx/0x2782fcbe8233ded26595d12aafffdca11c060240469ad9a8ca5f643d78950508
+50/205
+Token Transfer: 24https://etherscan.io/tx/0x64aad25aa50e272b3a36ab74bb8daa7c3e8ea9afb1ca8519b9da657da35773cb
+Step: 1
+From Shiba Inu: ShibaSwap To 0xcf6daab95c476106eca715d48de4b13287ffdeaa For 0.012  (WETH)
+Step: 2
+From 0xcf6daab95c476106eca715d48de4b13287ffdeaa To 0x8268c5d6dc7c9ddf16c596fc9967cfe994d27eb7 For 5,018,750.810628377897822075 SHIBA INU (SHIB) 
+51/205
+Token Transfer: 25https://etherscan.io/tx/0xfacaa4fd915a84e0456d2864d35780f43de48af46ff4eba0ad04c64d16e7edad
+52/205
+Token Transfer: 25https://etherscan.io/tx/0xb2cd2acee44dcf55a95cfbece43a078e6bee183f8f867119e38ecaa5ee49c48c
+53/205
+Token Transfer: 25https://etherscan.io/tx/0x73cc7bac04a5e9ca0ab1ddde2a7e09edafa91a37b3f8800c3579cb3c0163affe
+Step: 1
+From 0x1f8bb4d31dd8b204be1d72a5d4f3ebe33be36691 To Uniswap V2: PICKLE 2 For 94.977555883325379018 PickleToken (PICKLE) 
+Step: 2
+From Uniswap V2: PICKLE 2 To Uniswap V2: Router 2 For 0.309997166533902201  (WETH)
+54/205
+Token Transfer: 26https://etherscan.io/tx/0x6bf2fd614420dc79e3af5e0e5b97ff93f15efa87a2a42e00533e0d0c75fb1e26
+55/205
+Token Transfer: 26https://etherscan.io/tx/0xeec4760dd7bef5e9dcd1b0009fc28088949ea01cae211d2736b5e252c26daa0c
+56/205
+Token Transfer: 26https://etherscan.io/tx/0x811a80a0d56e3d84e0e0f1ee5933ae9999f48fbee8c9c9132a27d592fdd08cc6
+Step: 1
+From SushiSwap: Router To SushiSwap: CVX For 0.119  (WETH)
+Step: 2
+From SushiSwap: CVX To 0xcf656d0b05ce9c77587e97a0c8452e1e149ca764 For 54.421676463158012006 Convex Token (CVX) 
+57/205
+Token Transfer: 27https://etherscan.io/tx/0x0dd0a32d66e5960024d99a0939c0a30f1b0b9ff6ed67afa3c6c96791d309b84f
+Step: 1
+From 0x8ba19dd76fcfb6f5de38f6d672d0d0df48574c5f To 0x911daf61dbc8869064a99ecbf9133c961d07b18d For 50,180.069773 USD Coin (USDC)
+58/205
+Token Transfer: 28https://etherscan.io/tx/0x77950e7e487931fb411b8c26d0ccbb2b25de12cde1ceebf38930d6332eb5cf6c
+59/205
+Token Transfer: 28https://etherscan.io/tx/0xb1119d70f87a50abc3e753662462f2e1b09b9d3c3e7667c02b6307d04c22452e
+Step: 1
+From 0x: Exchange Proxy To Uniswap V2: VRA 3 For 0.615482174330663135  (WETH)
+Step: 2
+From Uniswap V2: VRA 3 To ZeroEx Proxy For 57,822.348948164232301193 VERA (VRA) 
+Step: 3
+From ZeroEx Proxy To 0xd80364f02055d9b47c7af70d8ee8fd9cef3f68f8 For 57,822.348948164232301193 VERA (VRA) 
+60/205
+Token Transfer: 29https://etherscan.io/tx/0xcd79ff2a268c51e4b726e9f87c720dca716a7265526b7df78b59bb9f605eef9c
+61/205
+Token Transfer: 29https://etherscan.io/tx/0x37106698dd7dd2749fb25085c0ab8e61e9f26e7e0b84485912dab1b15bdaf945
+62/205
+Token Transfer: 29https://etherscan.io/tx/0x69df5652c1c5d507a1baa03fb9f31e74ed5351edd1ebcf574587dbd5da7e0c11
+63/205
+Token Transfer: 29https://etherscan.io/tx/0x3a9de427cf89d38058c72c2d872b0c481592094801d636b942156d492cff7d56
+Step: 1
+From 0x3d50bd9893ea005dbe706db0d7fcb2f61e683d9f To 0xd43354ed762ae79c89b374b3505d2d49f00c8bf7 For 4,000 TrueUSD (TUSD)
+64/205
+Token Transfer: 30https://etherscan.io/tx/0xbf3148b8f016c6e5a6d0f0e83adb6ca9a2dbf542aa005023f913698ba078d03c
+65/205
+Token Transfer: 30https://etherscan.io/tx/0xe6b5c5d4bf9276677ae562f3080083c20f133c42ab514592a110e2156c0d4137
+66/205
+Token Transfer: 30https://etherscan.io/tx/0x47084b732d39a904ac8b95040b9c3a72a9fa609b52870fdb1e2b15a5856fdd38
+Step: 1
+From Bittrex To 0x3ce19af2d0585cd660eddeb82ddd29aeab6aafdf For 145.4802918 UniBright (UBT)
+67/205
+Token Transfer: 31https://etherscan.io/tx/0x6922a27cd65db2aa31e5ff1749f76872bac514b05b23ff94dcdcf8ada1a6cf15
+68/205
+Token Transfer: 31https://etherscan.io/tx/0x6fba650e7bc0b710d306107e5a78582d95e381ca97c027427b3fd69b96fa9e01
+69/205
+Token Transfer: 31https://etherscan.io/tx/0xced18f341861d30dd5812d60f24f338888baba8a128a9a17200bfec29a6f6b5d
+Step: 1
+From 0x23503115bd9020ee8d215e026b6c0dd4df0700c9 To 0x9d56e54c34770a86b7ead39de49a42a20cef9b45 For 1 Uniswap (UNI)
+70/205
+Token Transfer: 32https://etherscan.io/tx/0x38f4dc6beec9941c581b891eaaf39f1b46534372364fccd3568608c3d715dd02
+71/205
+Token Transfer: 32https://etherscan.io/tx/0x79abbf10b9dd54ce17630abe603ab3d5d092da7bed1c690fbf4d93bf37d49a2f
+72/205
+Token Transfer: 32https://etherscan.io/tx/0xfc5843d31afc46a380ad938ab72a199f2299cbc66dc13f9e04bc8811ed0a6396
+73/205
+Token Transfer: 32https://etherscan.io/tx/0xc31d86c187170600b093b803e5585a2a06e19dd8845c1da0a5f69585a8542cc9
+74/205
+Token Transfer: 33https://etherscan.io/tx/0x204cae071204623462e8766dc0782a2ca8f655a3d7df8007ad97bc072b243a2a
+Step: 1
+From HitBTC 3 To HitBTC 2 For 45,000 Binance USD (BUSD)
+75/205
+Token Transfer: 34https://etherscan.io/tx/0xb497ab0acd649c9c577d26730c3c5704fd2a91fd997ba6e213d4b87db0836a68
+76/205
+Token Transfer: 34https://etherscan.io/tx/0xe495308ec3cf7b428bc2fc7645708b17d79c135294d4588def5d846308be6a46
+Step: 1
+From 0xc5a5476f8a224aacb8932b9ffbc941ca7a175785 To Binance 14 For 616.815318609203721573 Audius (AUDIO) 
+77/205
+Token Transfer: 35https://etherscan.io/tx/0x70059decbcbc432e2c58cff9cf6106622923f6ec4fa1fa7afe42e2561f26314f
+Step: 1
+From 0xfefafe50fee01f9526a318f2c532b683de847f12 To 0xb8302f4c2fcdb5b84cfeffb7e24ed7f9bec7a0f5 For 30,000 Tether USD (USDT)
+78/205
+Token Transfer: 36https://etherscan.io/tx/0x12b81743e4c53e344b1d4f9c59cb43094a3a6156ff0d41643bba618c09456a61
+79/205
+Token Transfer: 36https://etherscan.io/tx/0xd4057140fe8d6f701101b8977490cf6cbc933809f90313cf345efc8dc4e60f88
+80/205
+Token Transfer: 36https://etherscan.io/tx/0x5cf4ac3ecdee0980d6a2af96340c6d2db1560b1410ffef0c07589f2e125c7b8c
+81/205
+Token Transfer: 36https://etherscan.io/tx/0xacd13a9b21d9a00e8c11eb9e9abada0aa6380c87789008415fb7e3094943215f
+Step: 1
+From Coinbase 5 To 0xaa3d7f86ee275cfacb84cfa3f384d9b93aab6b01 For 50 Tether USD (USDT)
+82/205
+Token Transfer: 37https://etherscan.io/tx/0x17b4607eb06e076113264adfc45bb4ea2b7169d140293afde822f01178c7d34e
+83/205
+Token Transfer: 37https://etherscan.io/tx/0x708f6b253f34cfe4a6223c75d8c0f1b95be50abce659e4bfc429ec84bb44fbb6
+Step: 1
+From Coinbase 5 To 0x006181c61eacbd117ff91afc7d8376e5dc23c713 For 3,009.059668 Tether USD (USDT)
+84/205
+Token Transfer: 38https://etherscan.io/tx/0x6e50630586b8350e6ab3cdd028928c0465bc33f574d27cff771201dbd3d10ccd
+85/205
+Token Transfer: 38https://etherscan.io/tx/0x51f5e33f429d0221b9d105b5b10b8598df30f582b5d6171f3bc5993f60f8f19d
+86/205
+Token Transfer: 38https://etherscan.io/tx/0x8241cfed3718c987e150f6e8999dc9fa5fa699476b1558de37d2822ba7b2f6be
+Step: 1
+From Coinbase 3 To 0xf987449c6fa21eed25f5e3cd2ea35afbed914f7c For 100 Matic Token (MATIC)
+87/205
+Token Transfer: 39https://etherscan.io/tx/0xf8ba33c8b6e8c0da5709d59618eadac256679215fcf9a49eeff4184b79ac32c6
+88/205
+Token Transfer: 39https://etherscan.io/tx/0x836aea46c3826e4ba1560dd2bab951a4d7a43dea5079854a3c5e8b33b5ac8e55
+89/205
+Token Transfer: 39https://etherscan.io/tx/0x4bccd088d71868cd01fde5b98b992df1a9c1813ba8632c4fbc3f73656dbf98d7
+90/205
+Token Transfer: 39https://etherscan.io/tx/0xa15738286e7145e9c5a28a831521d29bb093d7335802a0b390acc8611af432a4
+91/205
+Token Transfer: 39https://etherscan.io/tx/0x76e7089439e57f79f7a90307d7ff723a6776a6e27c32741512f0a55416804a28
+92/205
+Token Transfer: 39https://etherscan.io/tx/0x5fff9b242eade2f62a68d4a960d46811cfacef218061dafdbfe4d7a2f4b6c36e
+Step: 1
+From Coinbase 4 To 0xdeb2dd656f92d3879a9dbc31f44966f648459ff2 For 1,285.060439 Tether USD (USDT)
+93/205
+Token Transfer: 40https://etherscan.io/tx/0x45c41b973e7407f775d5b055b3ec039b4f85e05bc8f3b3cadcb3dd380c859b1a
+94/205
+Token Transfer: 40https://etherscan.io/tx/0xd3e9e2bbcf6f677839945a79be9f3e00466d3c3fdc77c0a59b7ceb0e76b5ef0f
+95/205
+Token Transfer: 40https://etherscan.io/tx/0x347a50fe8b4e6e330f65e21dce01ee52c48558c39c0946acf13cb8b90e86c60c
+96/205
+Token Transfer: 40https://etherscan.io/tx/0x56cb5e460e289fd46873e97f58f30760f9bcc8db519a25952b9175d2dbf33043
+97/205
+Token Transfer: 40https://etherscan.io/tx/0x2264d01fc042d14a12d6ab62d7232a10e1245c05b0e838b3c9e5709226ec967f
+98/205
+Token Transfer: 40https://etherscan.io/tx/0x24f8f7a2817f38d81d4a977070b69355af8d6e7bfe9421e22f25d1f6ee221b55
+Step: 1
+From Coinbase 5 To 0x1dceecdf9ae8f5d019bc56f617e79cb9ebfa4929 For 1,000 Tether USD (USDT)
+99/205
+Token Transfer: 41https://etherscan.io/tx/0x9feae55eaa522f38a96dac98aa11c156d73e46fa7ff053489e9e5aab80a4596f
+100/205
+Token Transfer: 41https://etherscan.io/tx/0xef1873569fc04f6c6f8cb09fd0514cbef060e1d7f746ed4d567b96aa6cf45ca6
+Step: 1
+From Coinbase 4 To 0x8fe41d28a245be3ffae137cc32efd55bcb1b83ec For 1,225.12211701  (SNX)
+101/205
+Token Transfer: 42https://etherscan.io/tx/0x4ceb0ee100eca2080f51d2e440612583db36fe4f239e520f2ba17000534b417a
+102/205
+Token Transfer: 42https://etherscan.io/tx/0x22ff11288a7510b5b89c35f500f655f0da720bb2e863e103af7235cbb364a52a
+103/205
+Token Transfer: 42https://etherscan.io/tx/0x49590aa44b10321b6b0ea63fc32ef14dd634754b278c58a8fcf0cdd03673ceba
+104/205
+Token Transfer: 42https://etherscan.io/tx/0x5d3372e9be69684b5c6b6dd60194b983cf262985bef063a293146d2053e763c6
+105/205
+Token Transfer: 42https://etherscan.io/tx/0x863ed8d73f5bb5875637455551ad3023152fbcec6cd9e88e34153c71b145b09c
+106/205
+Token Transfer: 42https://etherscan.io/tx/0xa97dd87b313f8d980f5a1d7597cd1c8eb452e03e765413205c67faa836cc4bf7
+107/205
+Token Transfer: 42https://etherscan.io/tx/0xa33fd8ee186c7b660d5a007564c94e31a092b7d63330999fe65d560ce7f9371a
+108/205
+Token Transfer: 42https://etherscan.io/tx/0xadb1b736b2f9ac6bbd401050f0e50136b7c6f838a9d56abb4d699e78216d131e
+109/205
+Token Transfer: 42https://etherscan.io/tx/0x636cb43159813fd968349146d753d1ffb9d9eb6d514b8791c5114fa36bbc5691
+110/205
+Token Transfer: 42https://etherscan.io/tx/0x8ed8a5160684c53feb9c7ee9d03c3912119829755521efa35de557c59a3bf7cb
+111/205
+Token Transfer: 42https://etherscan.io/tx/0xfe2f1d82b69aec4d23036ff132f813b37a783b5f89cf3b660f92eeac2e54b099
+112/205
+Token Transfer: 42https://etherscan.io/tx/0xa9250a64d4e0bb633b8a2ae2227dedbb8715dfa99d8b1307baf67df178a26262
+Step: 1
+From 1inch V3 To SushiSwap: USDC For 0.3172  (WETH)
+Step: 2
+From SushiSwap: USDC To 0x74de5d4fcbf63e00296fd95d33236b9794016631 For 1,014.197351 USD Coin (USDC)
+Step: 3
+From 0x74de5d4fcbf63e00296fd95d33236b9794016631 To 0x01fa2bea469ddc898ec3359399bf1ce393241c08 For 1,014.197351 USD Coin (USDC)
+113/205
+Token Transfer: 43https://etherscan.io/tx/0x708c7133b2067a09fd43d8e0815c6f5ec312f4da57e63435109c04fb79f8b4c6
+114/205
+Token Transfer: 44https://etherscan.io/tx/0x04633fb8bb3b0fe2c6c025f903bf08cf69c0dbe10cceb2a4af4306a64bcdf700
+115/205
+Token Transfer: 45https://etherscan.io/tx/0x67c06c96c34abfc07d4ab07822bdb1c2b18229baf68260678c0914242d3163ee
+116/205
+Token Transfer: 45https://etherscan.io/tx/0x0b1c3d1f811c289227435ebb1026bf6251f03bd5ada88ee4c6413df202f87be9
+117/205
+Token Transfer: 45https://etherscan.io/tx/0xbc0526806ab2261d6c9f6fb125f01142c6ca2bdc508c111e45e6ad44fca39238
+Step: 1
+From 0xaabc5e635564e728f6139489588abbadea2cd9a0 To 0x74de5d4fcbf63e00296fd95d33236b9794016631 For 2.15  (WETH)
+Step: 2
+From 0x74de5d4fcbf63e00296fd95d33236b9794016631 To ParaSwap P4 For 2.15  (WETH)
+118/205
+Token Transfer: 46https://etherscan.io/tx/0xa28e50ee925ea9706601e883ab1ba8f179be1b395ef0b419e5b555f039c1e5f8
+119/205
+Token Transfer: 47https://etherscan.io/tx/0x0521acf7eddee423b6c8fb4db15c99c50245173ec8c634a3c02d8ffcfc9e1c9b
+Step: 1
+From 0x8453a9dc1680a935aab6b4c445f63a611cb6337d To 0x6920a52768fce18bd855b8899a76ddb74cd4f803 For 3,548.266396 USD Coin (USDC)
+120/205
+Token Transfer: 48https://etherscan.io/tx/0xcb7a98630a3aa1323bf86200d05c8b39d7e17df3937f175680650d67ea7f608b
+121/205
+Token Transfer: 48https://etherscan.io/tx/0x68e89e9ca9947bb0ed0804a857e94d9f25f03ca01ac8f91595238669d27a43e9
+Step: 1
+From Uniswap V2: Router 2 To Uniswap V2: UNN 42 For 1  (WETH)
+Step: 2
+From Uniswap V2: UNN 42 To 0xf88e8260faf0de1407dcf9aba5f2f6cce6c0a28c For 117,203.767918357504913667  (UNN) 
+122/205
+Token Transfer: 49https://etherscan.io/tx/0xedebdd1222ef2c41601364419abddbacd30efeedc5799761f7f8422f16799c00
+123/205
+Token Transfer: 49https://etherscan.io/tx/0xcc17dc4ca49c91fb762114b128196aaaf73a2d8328ae9c13412c7ea58bda50c6
+Step: 1
+From 0x95871642ac891c68aff593f944eba624e4091111 To 0x23ca386edd87ecd8c91e44257aaaeabd326b1b0d For 2.2  (WETH)
+Step: 2
+From 0x23ca386edd87ecd8c91e44257aaaeabd326b1b0d To OpenSea: Wallet For 0.275  (WETH)
+124/205
+Token Transfer: 50https://etherscan.io/tx/0xe52c9a68fb53b1826ed97ceba5b21049bf22e78b37e9b7354d408d96bca5f0d4
+125/205
+Token Transfer: 50https://etherscan.io/tx/0x10eb632504824925f53ca6ab9c4b85bd69ba1757e0969a6d7c7b1028e22ecb8e
+Step: 1
+From 0x5869c9512b3f395828d753ff78cc8f55cf12df37 To Avalanche: Bridge For 29.5  (WETH)
+126/205
+Token Transfer: 51https://etherscan.io/tx/0xa8e973ca90ab7fbc7a04ddaf7d858b6707e102d7c6a9b96b26f7b41481bba952
+Step: 1
+From 0x810133474375f283b9b639b5f4301b2de9691a89 To 0x74de5d4fcbf63e00296fd95d33236b9794016631 For 0.58  (WETH)
+Step: 2
+From 0x74de5d4fcbf63e00296fd95d33236b9794016631 To ParaSwap P4 For 0.58  (WETH)
+127/205
+Token Transfer: 52https://etherscan.io/tx/0x91d7c81b4ed97c361e901019d4355ad3993fa9b77a42457046c848e492bf7bc9
+Step: 1
+From 0xb7671b122f27237551d134b68bad9e89080aca9c To 0x74de5d4fcbf63e00296fd95d33236b9794016631 For 51.029874433884110524  (ERN) 
+Step: 2
+From 0x74de5d4fcbf63e00296fd95d33236b9794016631 To Uniswap V2: ERN 9 For 51.029874433884110524  (ERN) 
+Step: 3
+From Uniswap V2: ERN 9 To 1inch V3 For 0.281287111668306513  (WETH)
+128/205
+Token Transfer: 53https://etherscan.io/tx/0x72cd353f0311cfe1053d118068fdfa6f788ceb3a7f31f2e6f88536d1c8325312
+129/205
+Token Transfer: 54https://etherscan.io/tx/0x9b9838bfd520f0ae359a040e3f0c02f7e59364a930c87979458dd9cfb5f9b136
+130/205
+Token Transfer: 54https://etherscan.io/tx/0xfb63841a112321a827a1b2a5e8b416e2cbafbb23287af05573c97bfe02d03e71
+131/205
+Token Transfer: 54https://etherscan.io/tx/0x7345ffea6a63e5386c780673404786427179c3cd0d77c55b63818334ddd05217
+132/205
+Token Transfer: 54https://etherscan.io/tx/0xb44cdaa8feb3112c725a6eb09efd3e80c342ab002e7ea6611914d099ff8fe582
+133/205
+Token Transfer: 54https://etherscan.io/tx/0x550a26e5f1559fbd0e59009214271b74579ec32096df13c3b01f7b77dcd22be9
+134/205
+Token Transfer: 54https://etherscan.io/tx/0x210e0ea42c208c2360950f90379adea6507fbcee1c53f1d35b9a53eb3b6a3a9d
+Step: 1
+From 0x7faa949ae89ebf086bc110705242c1b024107415 To Uniswap V2: CGG 6 For 3,464.918114047927738423  (CGG) 
+Step: 2
+From Uniswap V2: CGG 6 To Uniswap V2: Router 2 For 1.5  (WETH)
+135/205
+Token Transfer: 55https://etherscan.io/tx/0x8b927d28b2afff7d0d9ffaed33c42aa84dc631f31bd39b90e19f435135684433
+136/205
+Token Transfer: 55https://etherscan.io/tx/0x4bf99640c5ba58ea850292b2c2c77b6c09859420494c76f01b26d151f5a8c877
+137/205
+Token Transfer: 55https://etherscan.io/tx/0x89117c3ddc070f9520143cec6103aec3511fa11620854185b69fbceff798ed5a
+138/205
+Token Transfer: 55https://etherscan.io/tx/0x97a3daeff1b7ffaaf54bee9ba700153a4e081442387363d3a30ce2cebed9e3bf
+139/205
+Token Transfer: 55https://etherscan.io/tx/0xd451af0914a9ea8b965ce5412d088acf9cde283f057f38171500a3cd2d2487f9
+Step: 1
+From Axie Infinity: Ronin Bridge To 0x5762eb8bc6570d3650daf36efef409ac66ea6e47 For 8,246  (SLP)
+140/205
+Token Transfer: 56https://etherscan.io/tx/0x7d8a9740baec3d3825e91d6ac714fb880616c76b46c8610d35164d29bcdc1bbf
+141/205
+Token Transfer: 57https://etherscan.io/tx/0xbcd92bef9637555038a69a5cdd56df10fe1f73ab27f6487523232aed86775f98
+142/205
+Token Transfer: 57https://etherscan.io/tx/0x4459fa92afc7d2988a8baa8746b4b9a4d22b3931b9b997e93837fab664ad529d
+143/205
+Token Transfer: 57https://etherscan.io/tx/0x9424f0d8ace6973dd0726bd4b5f8f3ab0a29d3d3147c76537213dbf472dbdd88
+144/205
+Token Transfer: 57https://etherscan.io/tx/0xefdf32cfe9e96df88fdbfa13651eb2fc2301b7b76a4a7f22938a8815d4c78603
+145/205
+Token Transfer: 57https://etherscan.io/tx/0xb0176dd79f730ca75b3be801c5ed6699f37335f4f73ea0986f68c630dd141453
+146/205
+Token Transfer: 58https://etherscan.io/tx/0x2b09dceb2a4d0bf1e272cf40271baa6c0ee3114091b516fe9346c27a02301f97
+147/205
+Token Transfer: 58https://etherscan.io/tx/0xe55c47209b8ab4f5eb49db607a340fda54e1e93532925de45b1dac196e8ecdc9
+148/205
+Token Transfer: 59https://etherscan.io/tx/0x9052f6e701d40514696eca5c940cbcc6986f2277e1665c147396347b9e16bdc5
+149/205
+Token Transfer: 59https://etherscan.io/tx/0x432eca24d809563ccb4c52b1af19309e2540d47b7c5c9ccbd74eca5ca884bdb6
+150/205
+Token Transfer: 59https://etherscan.io/tx/0xdb501459e1e2f358c76fc827f3548d651f93b1702b73638d24525c9dbcf12c83
+151/205
+Token Transfer: 60https://etherscan.io/tx/0x007f6b8c9ace3a7b41ee0636fa02ec43f3bf316d2b45a50a45d8f57fb4a37579
+152/205
+Token Transfer: 61https://etherscan.io/tx/0x31bfae4faa530496e8421de3155f767560fee6f389e73d8ef9f0a21258270010
+153/205
+Token Transfer: 61https://etherscan.io/tx/0x46c132606af473379677a74b47737850645bc8bafd1aba2bd4d330c06deec6f1
+154/205
+Token Transfer: 61https://etherscan.io/tx/0x60fda1ddde2f7e640b3c2fe62ef8d61c4f19d0101c50db2239515417c64ac99c
+155/205
+Token Transfer: 61https://etherscan.io/tx/0xb99ad978b6e73fc8beb42d90db4657c5eec78672da2c92cb0cb525e25325bef2
+Step: 1
+From Uniswap V2: Router 2 To Uniswap V2: VPP 4 For 0.2  (WETH)
+Step: 2
+From Uniswap V2: VPP 4 To 0x275853709c1b3a72ac00f0564a5e9d64e0dc5b01 For 1,143.866196664649530137  (VPP) 
+156/205
+Token Transfer: 62https://etherscan.io/tx/0xfae04c1f2b822eddd4e903b7dfc57e9ed9d4083a0ecc1132219376a5c36bad66
+157/205
+Token Transfer: 62https://etherscan.io/tx/0xee915692f85d7088afd3e2159dafb5bfd2233ff3ee079c70c1addfa33430ff3c
+158/205
+Token Transfer: 63https://etherscan.io/tx/0xeccb08fce83eb988c7e4cb9fc819de41ad8a9fcac6ccd8c9e2f2fcf2a06e2d54
+Step: 1
+From 0x96051588ee65acde2453e972e1120cf6b2f4651d To Uniswap V2: LTY-USDC For 655.377966 USD Coin (USDC)
+Step: 2
+From 0x96051588ee65acde2453e972e1120cf6b2f4651d To Uniswap V2: LTY-USDC For 56,577.728755828338129258 Ledgity (LTY) 
+Step: 3
+From 0x0000...0000 To 0x96051588ee65acde2453e972e1120cf6b2f4651d For 0.005245417572479424 Uniswap V2 (UNI-V2) 
+159/205
+Token Transfer: 64https://etherscan.io/tx/0x28a2c14f2ff990f9e3f4139898f8b2fe1a7da213be5a4742852653b56fe07975
+160/205
+Token Transfer: 65https://etherscan.io/tx/0xd2f1f40ee509d3b7bcc1ade5753179875ea8a99d130c89471b2d8f54f5e4a9e4
+161/205
+Token Transfer: 65https://etherscan.io/tx/0x047fa83e5bdc574ad7e275bd3bd33f5724f2824c5fb0305dbc46821ee8887e0b
+Step: 1
+From 0x329420649604a57c616692c51106196a4712ea24 To 0x573317fac0adceffa7d31f4b93a5893b57b5e72a For 0.000193578990999865 OpenOcean (OOE) 
+162/205
+Token Transfer: 66https://etherscan.io/tx/0x8a3be811d6aec75dce92a315923ca04147f8e04643df244a43b02b7e683cd2d3
+163/205
+Token Transfer: 67https://etherscan.io/tx/0xb33851b25429823b9b54c5d544bbabf3cb83d1ee421a693c610149f26ac28859
+Step: 1
+From 0x4b5a936a02d301e9c5137b2df642666d55799156 To 0x0000...0000 For 75,000 HEX (HEX)
+164/205
+Token Transfer: 68https://etherscan.io/tx/0x73e20d8e5ed78ced85a9147090ff08508543fb4b5b17bebafc94089410236f02
+165/205
+Token Transfer: 69https://etherscan.io/tx/0x7e92b75b061d610cf468e744486663fadef71102f1f0728c00f9184aa4d2aee3
+166/205
+Token Transfer: 69https://etherscan.io/tx/0x4c701246aa38195e650e371d9bba1d14e546dbbe7ac12e862b4d8633304f9517
+167/205
+Token Transfer: 69https://etherscan.io/tx/0x23f3df3fb5d2446594f5f50dfa88ee30552266e5d0f8e1f7014a8c0fc837d44e
+Step: 1
+From 0xd4ca41cea634d5f232fc1c9d4b2058ba5fb479d8 To 0xa3b705b33a441ff73789ed7c84d9d79976e1f11a For 14.5  (WETH)
+168/205
+Token Transfer: 70https://etherscan.io/tx/0x9b0c6dade4150a57bc7612c61bc7d4c44fc8d5110da545984b5a1da30d85d3ee
+Step: 1
+From 0x54fe5247e0f4fbaa557c7882f29085ffe46cffc1 To 0x888888888881118aa1525feb3eda9834fdbc76f5 For 6,000 Tether USD (USDT)
+169/205
+Token Transfer: 71https://etherscan.io/tx/0x07f312f2a9d2cc2ec9246da2f0cd23bbcd531974dcf6863570b3d319bb4f2973
+170/205
+Token Transfer: 71https://etherscan.io/tx/0xc94c5bd9b9b4e49d68f755088e10e42e68788a615006435fc08d2dec55d533b6
+171/205
+Token Transfer: 71https://etherscan.io/tx/0x52c46ef413a8e303ad12845f2a86ca65204cf4405302ea7943c235065bf1906a
+172/205
+Token Transfer: 71https://etherscan.io/tx/0xbd78f14984c63c28ac4f7e7f4f420e72743da81be54a3ab0734c6f6e5ad3b008
+173/205
+Token Transfer: 71https://etherscan.io/tx/0xa29c182ceb4efa99aaa677ee8f67a9133dce346c059a29843ed564da5a9211bb
+174/205
+Token Transfer: 71https://etherscan.io/tx/0xc65891503b4f503d6d3ef807d9179a672c56fac38a15ab37b043b311b07762ac
+175/205
+Token Transfer: 71https://etherscan.io/tx/0x3e4c2675604dcafb2bde9b92a09bbe1f619193843b0c5dbbd932df031edb720d
+176/205
+Token Transfer: 71https://etherscan.io/tx/0xd48394f1cbb4b697b2847981268a3c027e43a806516a5563e0ccc375da4a626f
+177/205
+Token Transfer: 71https://etherscan.io/tx/0x97e6e71311b921da6574ebb5909a3f0d2fce4b6b6233d512213810058c87eb2f
+178/205
+Token Transfer: 71https://etherscan.io/tx/0xd457b7747105580fcb9a10755d3fda03709a33c2f7caf44730bdb6716fe427ca
+179/205
+Token Transfer: 71https://etherscan.io/tx/0x62dfa3406faca9e43b5a3fa2ed86ead769265f3b2d0195a86efd761dbbcc0f20
+180/205
+Token Transfer: 71https://etherscan.io/tx/0x412bd84c53193b8b914f059fde06718dee3e5f1b825b887ff3658df421664837
+181/205
+Token Transfer: 71https://etherscan.io/tx/0x6cd49f54fa232a3a70c6bc51e9c9b38785bde3e1a1b5ae190b0e470131a1bda3
+182/205
+Token Transfer: 72https://etherscan.io/tx/0xa96e77acdc776c996de881b9d1ece8b7133a679bf26fdb89bffc92e0d7479716
+183/205
+Token Transfer: 72https://etherscan.io/tx/0xdba2ce9808dfcab4063a15e6ba518afe3cc0e9f027e4634231039fb084e62f68
+184/205
+Token Transfer: 73https://etherscan.io/tx/0xd7b7f02bbd0d8f1a677a17e142184bdad0f348f9d44513897e5b525351dde7e5
+185/205
+Token Transfer: 73https://etherscan.io/tx/0x39f36aba342418dfb92f7c6fba1c47d337a2267245d1da9de10605e04e1b242e
+186/205
+Token Transfer: 73https://etherscan.io/tx/0xf3edffa5657b9fea7feafde574c32b182ee7579b9b93455c1cb0a0bfc68a3ecf
+Step: 1
+From 0x62c76ac6d1b798b3920c47c3461082c268686a41 To 0xe8f54dc5011c8abe3dfa0e03991a10bbb2636579 For 4,000 USD Coin (USDC)
+187/205
+Token Transfer: 74https://etherscan.io/tx/0xc11b07bad0315479e236bdb120c4f175fec73d11da6e0d7c10a4c910732340ec
+188/205
+Token Transfer: 75https://etherscan.io/tx/0x514a275845bafa505c71bf6d78aa56ac5bfe1cdd113262922b6e1f70ec271524
+189/205
+Token Transfer: 75https://etherscan.io/tx/0xd97d87ac6a729a6eb9c9da7550adb9dc2bad2f49f37f658aabc817398e23561f
+190/205
+Token Transfer: 75https://etherscan.io/tx/0x9af17ca499979386aac5726035e57a75992a94e0617206b178ad5049668a9a74
+191/205
+Token Transfer: 75https://etherscan.io/tx/0xf7b603320838fbbf8fec973222f485ce582daeb6f58e4e95329d67289c71dfc6
+192/205
+Token Transfer: 75https://etherscan.io/tx/0xa54fd9cdd04e1615e78735ec463a085f7c8a2421a518cb9ef0e886e19b6be8f5
+193/205
+Token Transfer: 75https://etherscan.io/tx/0x349c4d5e43a9caf7d528eacf090f84fadc0d72f6ef6c68e03d22483496d3d262
+194/205
+Token Transfer: 75https://etherscan.io/tx/0xd309cceb8d135e15dd48e826b9a32d63bc203f50cf6f180faa0254180cbbe434
+195/205
+Token Transfer: 76https://etherscan.io/tx/0x6f22a6cef857ea00a91eec378220ad8bf372c8c929f60b94b28d3fcb0177514c
+196/205
+Token Transfer: 76https://etherscan.io/tx/0xf3e407d222829912b814b3659523a043dc0b754e7421a296645f2461e48b63ad
+Step: 1
+From 0xd65a5c8158f759006d1f0be42801ad0264ccf7d1 To 0xaedaeeebc02d7642b40af4c52bd744eac50e095e For 43,495.935538 USD Coin (USDC)
+197/205
+Token Transfer: 77https://etherscan.io/tx/0x7fcbc0e3b1525838da462675b3b795385823ca3e8848bf6a3c17d12c21e92975
+Step: 1
+From 0x9f4ebcb22447c64a21c687c1db6849ec55b8f016 To 0x9e3382ca57f4404ac7bf435475eae37e87d1c453 For 210 Eden (EDEN) 
+198/205
+Token Transfer: 78https://etherscan.io/tx/0x67acb3201d3d36934390482e7c790210d55a1ce559b9a97cfbc36d28d26f5b62
+199/205
+Token Transfer: 78https://etherscan.io/tx/0xa9bd735f4d9bc948f662c49bc530700b0d0c113e18f87a669e5f8450fbaac3a7
+Step: 1
+From 0x13ca234c7bc7adf9cada491c84f2f56a59b29f97 To Uniswap V2: OCC-USDC For 556.592677 USD Coin (USDC)
+Step: 2
+From Uniswap V2: OCC-USDC To 0x13ca234c7bc7adf9cada491c84f2f56a59b29f97 For 61.089519578125572735 OCC (OCC)
+200/205
+Token Transfer: 79https://etherscan.io/tx/0xf503e54583faaa3df1407b17b3c52edca89d051ca4c5ba15095853b569ee38ea
+201/205
+Token Transfer: 79https://etherscan.io/tx/0x5eb3aba3efa624a8c6af21bb7f8032fc6dad73cfedbdea6cbc2e3dbc241badcb
+Step: 1
+From 0x0000...0000 To 0x647ed635be1df9104180cc95af4db84ff4400f33 For 0.11892603085820644 )
+Step: 2
+From 0x647ed635be1df9104180cc95af4db84ff4400f33 To yearn: yCRV/stETH Vault For 0.127408965791464575  (steCRV) 
+202/205
+Token Transfer: 80https://etherscan.io/tx/0x33d512703007c9533659d1f090f8c8e368bb85bb186c86145c9ab2fafd46d612
+203/205
+Token Transfer: 81https://etherscan.io/tx/0xb41cbf463e794f4ec2b612f9b01b377f97225fd6ed9751fb8bcdf89cb1762e7c
+Step: 1
+From 0x0000...0000 To 0x464c71f6c2f760dda6093dcb91c24c39e5d6e18c For 287.708744  (aUSDT) 
+Step: 2
+From Aave: aUSDT Token V2 To 0x41b51b0b9ecdd0ee54d82798e83fd3b9562a7a3c For 13,343,051.518674 Tether USD (USDT)
+Step: 3
+From 0x41b51b0b9ecdd0ee54d82798e83fd3b9562a7a3c To 0x0000...0000 For 13,343,051.518674  (aUSDT) 
+Step: 4
+From 0x41b51b0b9ecdd0ee54d82798e83fd3b9562a7a3c To 0x2f87c5e8396f0c41b86aad4f3c8358ab21681952 For 13,343,051.518674 Tether USD (USDT)
+Step: 5
+From 0x2f87c5e8396f0c41b86aad4f3c8358ab21681952 To 0x7da96a3891add058ada2e826306d812c638d87a7 For 13,343,051.518674 Tether USD (USDT)
+Step: 6
+From 0xd28b508ea08f14a473a5f332631ea1972cfd7cc0 To 0x0000...0000 For 16,352,744.658072 USDT yVault (yvUSDT) 
+Step: 7
+From 0x7da96a3891add058ada2e826306d812c638d87a7 To 0xd28b508ea08f14a473a5f332631ea1972cfd7cc0 For 16,641,513.255814 Tether USD (USDT)
+Step: 8
+From 0xd28b508ea08f14a473a5f332631ea1972cfd7cc0 To 0x0000...0000 For 16,641,513.255814 ) 
+Step: 9
+From 0xd28b508ea08f14a473a5f332631ea1972cfd7cc0 To Aave: aUSDT Token V2 For 16,641,513.255814 Tether USD (USDT)
+204/205
+Token Transfer: 82https://etherscan.io/tx/0xe1806bf9280911b5c5aeb4e4127083e2101aabdfe17a86ee581e6afae856cd7f
+205/205
+Token Transfer: 83
+Token Transfer: 83
+Normal Transfer: 122
