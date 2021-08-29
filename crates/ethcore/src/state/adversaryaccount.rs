@@ -64,27 +64,33 @@ impl AdversaryAccount {
         };
         ret
     }
-    pub fn lookup_balance_trace_from_address(&self, addr: Address, token_addr: Address) -> Option<Vec<(TransferDir, U256)>> {
-        match self.balance_traces.borrow_mut().get_mut(&addr).map(|value| value.clone()) {
-            Some(mut map_val) => {
-                map_val.get_mut(&token_addr).map(|value| value.clone())
-            },
-            None => None,
-        }
+    pub fn lookup_balance_trace_from_address(&self, addr: Address) -> Option<HashMap<Address,Vec<(TransferDir, U256)>>> {
+        self.balance_traces.borrow_mut().get_mut(&addr).map(|value| value.clone())
     }
     pub fn set_balance(&self, addr: Address, related_addr: Address, bal: U256, token_addr: Address, sender_receiver: bool) -> Option<U256> {
-        match self.lookup_balance_trace_from_address(addr, token_addr) {
-            Some(val) => {
-                let mut new_val = val.to_vec();
-                if sender_receiver {
-                    new_val.push((TransferDir::From(related_addr), bal));
-                }else{
-                    new_val.push((TransferDir::To(related_addr), bal));
+        match self.lookup_balance_trace_from_address(addr) {
+            Some(mut map_val) => {
+                match map_val.get_mut(&token_addr).map(|value| value.clone()) {
+                    Some(val) => {
+                        let mut new_val = val.to_vec();
+                        if sender_receiver {
+                            new_val.push((TransferDir::From(related_addr), bal));
+                        }else{
+                            new_val.push((TransferDir::To(related_addr), bal));
+                        }
+                        map_val.insert(token_addr, new_val);
+                    },
+                    None => {
+                        let mut new_val = Vec::new();
+                        if sender_receiver {
+                            new_val.push((TransferDir::From(related_addr), bal));
+                        }else{
+                            new_val.push((TransferDir::To(related_addr), bal));
+                        }
+                        map_val.insert(token_addr, new_val);
+                    },
                 }
-                
-                let mut inner_map = HashMap::new();
-                inner_map.insert(token_addr, new_val);
-                self.balance_traces.borrow_mut().insert(addr, inner_map);
+                self.balance_traces.borrow_mut().insert(addr, map_val);
                 Some(bal)
             },
             None => {
@@ -200,10 +206,21 @@ impl AdversaryAccount {
             None => None,
         } 
     }
+    pub fn token_transfer_flash_loan_check (&self) {
+        //Check the transaction is successfully executed
+        //Find some address get amt from flash loan contract address
+        //Check there is repayment for this flash loan address
+        //Check the address is beneficiary after all or not. (Pull down current price of each token)
+        //Check who is victim
+        //Check the cost at the beginning of the transaction
+    }
     pub fn assemable_deploy_transaction (&self) {
 
     }
     pub fn assemable_new_transaction (&self) {
+
+    }
+    pub fn virtual_run_transactions (&self) {
 
     }
 }

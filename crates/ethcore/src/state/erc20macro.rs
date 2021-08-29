@@ -7,6 +7,10 @@ lazy_static! {
     // pub static ref ETH_CONTRACT_ADDRESS: Address = Address::from_str("0000000000000000000000000000000000000000").unwrap();
     // //Dai stablecoin address
     // pub static ref DAI_CONTRACT_ADDRESS: Address = Address::from_str("6B175474E89094C44Da98b954EedeAC495271d0F").unwrap();
+    pub static ref FLASH_LOAN_CONTRACT_ADDRESSES: Vec<Address> = vec![
+                                                                      //dydxFlashLoanTemplate.sol for testing TODO: remove after done
+                                                                      Address::from_str("0000000000000000000000000000000000000000").unwrap(),
+                                                                     ];
     //Token Address Vec
     pub static ref CONTRACT_ADDRESSES: Vec<Address> = vec![//erc.sol for testing TODO: remove after done
                                                            Address::from_str("b4c79daB8f259C7Aee6E5b2Aa729821864227e84").unwrap(),

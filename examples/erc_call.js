@@ -58,8 +58,8 @@ const incrementerToCall = new web3.eth.Contract(abi, contractAddr);
 //       .call({ from: addressFrom });
 //    console.log(`The current balance is: ${data}`);
 //    await new Promise(r => setTimeout(r, 2000));
-var _value = 17;
-const encoded = incrementerToCall.methods.transfer(addressTo, _value).encodeABI();
+var _value = 27;
+const encoded = incrementerToCall.methods.faketransfer(addressTo, _value).encodeABI();
 await web3.eth.getTransactionCount(addressFrom, function(error, txCount) {
    new_nonce = txCount;
 }); 
@@ -71,6 +71,7 @@ console.log("now nonce is :", new_nonce);
          data: encoded,
          gas: '1000000',
          nonce: new_nonce + 1,
+         value: '39',
       },
       privKey
    );

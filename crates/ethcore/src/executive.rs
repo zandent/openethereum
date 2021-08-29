@@ -33,6 +33,8 @@ use vm::{
     self, AccessList, ActionParams, ActionValue, CleanDustMode, CreateContractAddress, EnvInfo,
     ResumeCall, ResumeCreate, ReturnData, Schedule, TrapError,
 };
+//Flash loan
+use std::str::FromStr;
 
 #[cfg(any(test, feature = "test-helpers"))]
 /// Precompile that can never be prunned from state trie (0x3, only in tests)
@@ -1275,6 +1277,17 @@ impl<'a, B: 'a + StateBackend> Executive<'a, B> {
                     params_type: vm::ParamsType::Embedded,
                     access_list: access_list,
                 };
+                //Flash loan
+                //Upon deployed when block mining, if there is msg.value, the ETH transfer should be kept.
+                if t.tx().value != U256::zero() {
+                    self.state.set_token_flow_in_current_transaction(
+                        sender.clone(), 
+                        sender.clone(), 
+                        new_address.clone(), 
+                        t.tx().value, 
+                        Address::from_str("0000000000000000000000000000000000000000").unwrap()
+                    );
+                }
                 let res = self.create(params, &mut substate, &mut tracer, &mut vm_tracer);
                 let out = match &res {
                     Ok(res) if output_from_create => res.return_data.to_vec(),
@@ -1299,6 +1312,17 @@ impl<'a, B: 'a + StateBackend> Executive<'a, B> {
                     params_type: vm::ParamsType::Separate,
                     access_list: access_list,
                 };
+                //Flash loan
+                //Upon deployed when block mining, if there is msg.value, the ETH transfer should be kept.
+                if t.tx().value != U256::zero() {
+                    self.state.set_token_flow_in_current_transaction(
+                        sender.clone(), 
+                        sender.clone(), 
+                        address.clone(), 
+                        t.tx().value, 
+                        Address::from_str("0000000000000000000000000000000000000000").unwrap()
+                    );
+                }
                 let res = self.call(params, &mut substate, &mut tracer, &mut vm_tracer);
                 let out = match &res {
                     Ok(res) => res.return_data.to_vec(),

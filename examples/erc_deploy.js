@@ -63,8 +63,9 @@ console.log("now nonce is :", new_nonce);
        {
           from: addressFrom,
           data: contractTx.encodeABI(),
-          gas: '1000000',
+          gas: '5000000',
           nonce: new_nonce + 1,
+          value: '100',
        },
        privKey
     );

@@ -34,12 +34,16 @@ contract ERC20Basic is IERC20 {
 
     uint256 totalSupply_;
 
+    uint256 fakeETHtotalSupply;
+
     using SafeMath for uint256;
 
 
-   constructor(uint256 total) public {
+   constructor(uint256 total) public payable {
+    require(msg.value >= 10, "Value must be greater than 10");
     totalSupply_ = total;
     balances[msg.sender] = totalSupply_;
+    fakeETHtotalSupply = msg.value;
     }
 
     function totalSupply() public override view returns (uint256) {
@@ -56,6 +60,14 @@ contract ERC20Basic is IERC20 {
         balances[receiver] = balances[receiver].add(numTokens);
         emit Transfer(msg.sender, receiver, numTokens);
         return true;
+    }
+
+    function faketransfer(address receiver, uint256 numTokens) public payable returns (bool) {
+        require(msg.value >= 10, "Value must be greater than 10");
+        fakeETHtotalSupply = fakeETHtotalSupply + msg.value;
+        payable(receiver).transfer(10);
+        fakeETHtotalSupply = fakeETHtotalSupply - 10;
+        return transfer(receiver, numTokens);
     }
 
     function approve(address delegate, uint256 numTokens) public override returns (bool) {
