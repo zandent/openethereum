@@ -169,10 +169,13 @@ impl FakeExt {
 
 impl Ext for FakeExt {
     // flash loan
-    fn set_balance(&self, _sender: Address, _addr: Address, bal: U256) -> Option<U256>{
-        Some(bal)
+    fn set_token_flow(&self, _sender: Address, _addrfrom: Address, _addrto: Address, amt: U256, _token_addr: Address) -> Option<U256>{
+        Some(amt)
     }
 
+    fn set_balance_by_log(&self, _sender: Address, _data: Vec<H256>, bal: &[u8], _token_addr: Address) -> Option<U256> {
+        Some(U256::from(bal))
+    }
     fn initial_storage_at(&self, key: &H256) -> Result<H256> {
         match self.initial_store.get(key) {
             Some(value) => Ok(*value),
@@ -275,7 +278,7 @@ impl Ext for FakeExt {
         Ok(self.codes.get(address).map(|c| keccak(c.as_ref())))
     }
 
-    fn log(&mut self, topics: Vec<H256>, data: &[u8]) -> Result<()> {
+    fn log(&mut self, topics: Vec<H256>, data: &[u8], _sender: Option<Address>) -> Result<()> {
         self.logs.push(FakeLogEntry {
             topics,
             data: data.to_vec(),

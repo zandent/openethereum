@@ -58,7 +58,10 @@ mod account;
 mod substate;
 /////////////////////////////
 // flash loan
-mod adversaryaccount;
+#[doc(hidden)]
+pub mod adversaryaccount;
+#[doc(hidden)]
+pub mod erc20macro;
 
 pub mod backend;
 
@@ -479,17 +482,24 @@ impl<B: Backend> State<B> {
         }
     }
 
-    /// Set balance of each transfer instruction
-    pub fn set_balance_in_current_transaction(&self, sender: Address, addr: Address, bal: U256) -> Option<U256> {
+    /// Set token flow by two addresses
+    pub fn set_token_flow_in_current_transaction(
+        &self, 
+        sender: Address, 
+        addrfrom: Address, 
+        addrto: Address, 
+        amt: U256,
+        token_addr: Address,
+    ) -> Option<U256> {
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
             Some(val) => {
-                val[val.len()-1].1.set_balance(addr, bal)
+                val[val.len()-1].1.set_token_flow(addrfrom, addrto, amt, token_addr)
             },
             None => None,
         }
-    }
+    }    
     /// check identify_beneficiary of each transfer instruction
-    pub fn identify_beneficiary(&self, sender: Address) -> Option<Vec<(Address, U256)>> {
+    pub fn identify_beneficiary(&self, sender: Address) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
             Some(val) => {
                 val[val.len()-1].1.identify_beneficiary()
@@ -498,7 +508,7 @@ impl<B: Backend> State<B> {
         }
     }
     /// check identify_beneficiary of each transfer instruction
-    pub fn identify_victim(&self, sender: Address) -> Option<Vec<(Address, U256)>> {
+    pub fn identify_victim(&self, sender: Address) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
             Some(val) => {
                 val[val.len()-1].1.identify_victim()

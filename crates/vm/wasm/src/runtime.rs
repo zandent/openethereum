@@ -797,7 +797,7 @@ impl<'a> Runtime<'a> {
 				= H256::from_slice(&self.memory.get(offset, 32)?[..]);
         }
         self.ext
-            .log(topics, &self.memory.get(data_ptr, data_len as usize)?)
+            .log(topics, &self.memory.get(data_ptr, data_len as usize)?, None)
             .map_err(|_| Error::Log)?;
 
         Ok(())

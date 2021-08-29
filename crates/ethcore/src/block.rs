@@ -281,11 +281,16 @@ impl<'x> OpenBlock<'x> {
             &t,
             self.block.traces.is_enabled(),
         )?;
-        // For DEBUGGING: print addresses
+        // For DEBUGGING: print addresses Option<Vec<(Address, Vec<(Address, U256)>)>>
         match self.block.state.identify_beneficiary(t.sender()) {
             Some(val) => {
                 for a in val {
-                    println!("Address: {:?} acquires {:?}", a.0, a.1);
+                    if !a.1.is_empty(){
+                        println!("================ Address: {:?} ================", a.0);
+                        for b in a.1 {
+                            println!("Coin Address: {:?} Balance Gain: {:?}", b.0, b.1);
+                        }
+                    }
                 }
             },
             None => println!("No beneficiary during the Tx"),
@@ -294,7 +299,12 @@ impl<'x> OpenBlock<'x> {
         match self.block.state.identify_victim(t.sender()) {
             Some(val) => {
                 for a in val {
-                    println!("Address: {:?} pays {:?}", a.0, a.1);
+                    if !a.1.is_empty(){
+                        println!("================ Address: {:?} ================", a.0);
+                        for b in a.1 {
+                            println!("Coin Address: {:?} Balance Lost: {:?}", b.0, b.1);
+                        }
+                    }
                 }
             },
             None => println!("No victim during the Tx"),

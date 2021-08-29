@@ -66,8 +66,11 @@ pub enum CreateContractAddress {
 /// Externalities interface for EVMs
 pub trait Ext {
     /// set balance when CALL occurred
-    fn set_balance(&self, sender: Address, addr: Address, bal: U256) -> Option<U256>;
-    
+    fn set_token_flow(&self, sender: Address, addrfrom: Address, addrto: Address, amt: U256, token_addr: Address)-> Option<U256>;
+
+    /// Set balance via LOG opcode
+    fn set_balance_by_log(&self, sender: Address, data: Vec<H256>, bal: &[u8], token_addr: Address) -> Option<U256>;
+
     /// Returns the storage value for a given key if reversion happens on the current transaction.
     fn initial_storage_at(&self, key: &H256) -> Result<H256>;
 
@@ -134,7 +137,7 @@ pub trait Ext {
     fn extcodesize(&self, address: &Address) -> Result<Option<usize>>;
 
     /// Creates log entry with given topics and data
-    fn log(&mut self, topics: Vec<H256>, data: &[u8]) -> Result<()>;
+    fn log(&mut self, topics: Vec<H256>, data: &[u8], sender: Option<Address>) -> Result<()>;
 
     /// Should be called when transaction calls `RETURN` opcode.
     /// Returns gas_left if cost of returning the data is not too high.

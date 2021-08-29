@@ -45,6 +45,8 @@ use self::{
 };
 
 use bit_set::BitSet;
+// Flash loan
+use std::str::FromStr;
 
 const GASOMETER_PROOF: &str = "If gasometer is None, Err is immediately returned in step; this function is only called by step; qed";
 
@@ -854,10 +856,16 @@ impl<Cost: CostType> Interpreter<Cost> {
 
                 // flash loan
                 // set balance before running CALL
-                println!("Potential ETH transaction will occur: from {:?} ({:?}) to {:?} ({:?})", 
-                sender_address, ext.balance(&sender_address)?, receive_address, ext.balance(&receive_address)?);
-                ext.set_balance(self.params.sender, *sender_address, ext.balance(&sender_address)?);
-                ext.set_balance(self.params.sender, *receive_address, ext.balance(&receive_address)?);
+                match value {
+                    Some(val) => {
+                        if val > U256::zero() {
+                            println!("Potential ETH transaction will occur: from {:?} ({:?}) to {:?} ({:?})", 
+                            sender_address, ext.balance(&sender_address)?, receive_address, ext.balance(&receive_address)?);
+                        }
+                    },
+                    None => (),
+                }
+
                 let call_result = {
                     let input = self.mem.read_slice(in_off, in_size);
                     ext.call(
@@ -874,14 +882,6 @@ impl<Cost: CostType> Interpreter<Cost> {
 
                 self.resume_output_range = Some((out_off, out_size));
 
-                ////////////////////////////////////////////////////
-                // Flash loan projects
-                println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
-                sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
-                ext.set_balance(self.params.sender, *sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()));
-                ext.set_balance(self.params.sender, *receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
-                // Flash loan projects
-                ////////////////////////////////////////////////////
                 return match call_result {
                     Ok(MessageCallResult::Success(gas_left, data)) => {
                         let output = self.mem.writeable_slice(out_off, out_size);
@@ -890,6 +890,20 @@ impl<Cost: CostType> Interpreter<Cost> {
 
                         self.stack.push(U256::one());
                         self.return_data = data;
+                        ////////////////////////////////////////////////////
+                        // Flash loan projects
+                        match value {
+                            Some(val) => {
+                                if val > U256::zero() {
+                                    println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
+                                    sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
+                                    ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000000").unwrap());
+                                }
+                            },
+                            None => (),
+                        }
+                        // Flash loan projects
+                        ////////////////////////////////////////////////////
                         Ok(InstructionResult::UnusedGas(
                             Cost::from_u256(gas_left)
                                 .expect("Gas left cannot be greater than current one"),
@@ -911,7 +925,23 @@ impl<Cost: CostType> Interpreter<Cost> {
                         self.stack.push(U256::zero());
                         Ok(InstructionResult::Ok)
                     }
-                    Err(trap) => Ok(InstructionResult::Trap(trap)),
+                    Err(trap) => {
+                        ////////////////////////////////////////////////////
+                        // Flash loan projects
+                        match value {
+                            Some(val) => {
+                                if val > U256::zero() {
+                                    println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
+                                    sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
+                                    ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000000").unwrap());
+                                }
+                            },
+                            None => (),
+                        }
+                        // Flash loan projects
+                        ////////////////////////////////////////////////////                        
+                        Ok(InstructionResult::Trap(trap))
+                    },
                 };
             }
             instructions::RETURN => {
@@ -950,6 +980,7 @@ impl<Cost: CostType> Interpreter<Cost> {
             | instructions::LOG2
             | instructions::LOG3
             | instructions::LOG4 => {
+                println!("Here is instructions::LOG! ===========================");
                 let no_of_topics = instruction
                     .log_topics()
                     .expect("log_topics always return some for LOG* instructions; qed");
@@ -962,7 +993,7 @@ impl<Cost: CostType> Interpreter<Cost> {
                     .iter()
                     .map(BigEndianHash::from_uint)
                     .collect();
-                ext.log(topics, self.mem.read_slice(offset, size))?;
+                ext.log(topics, self.mem.read_slice(offset, size), Some(self.params.sender.clone()))?;
             }
             instructions::PUSH1
             | instructions::PUSH2

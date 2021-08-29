@@ -9,6 +9,13 @@ use std::{
     sync::Arc,
 };
 use ethtrie::{Result as TrieResult, SecTrieDB, TrieDB, TrieFactory};
+pub use state::erc20macro::*;
+/// Direction for each transfer
+#[derive(Copy, Clone, Debug)]
+pub enum TransferDir {
+    From(Address), //The "Address" is the receiver
+    To(Address), //The "Address" is the sender
+}
 /// Accounts who perform transfer in transaction
 #[derive(
     Clone,
@@ -20,7 +27,10 @@ pub struct AdversaryAccount {
     // final balance after transaction
     //final_balances: RefCell<HashMap<Address, U256>>,
     // account balance trace
-    balance_traces: RefCell<HashMap<Address, Vec<U256>>>,
+    //Address 1: the owner of the tokens
+    //Address 2: the contract address of the token
+    //Vec<U256>: the trace of the toke flows
+    balance_traces: RefCell<HashMap<Address, HashMap<Address,Vec<(TransferDir, U256)>>>>,
     // potential flash loan transaction
     old_tx: SignedTransaction,
     // Nonce of Adversary account.
@@ -54,49 +64,141 @@ impl AdversaryAccount {
         };
         ret
     }
-    pub fn lookup_balance_trace_from_address(&self, addr: Address) -> Option<Vec<U256>> {
-        self.balance_traces.borrow_mut().get_mut(&addr).map(|value| value.clone())
+    pub fn lookup_balance_trace_from_address(&self, addr: Address, token_addr: Address) -> Option<Vec<(TransferDir, U256)>> {
+        match self.balance_traces.borrow_mut().get_mut(&addr).map(|value| value.clone()) {
+            Some(mut map_val) => {
+                map_val.get_mut(&token_addr).map(|value| value.clone())
+            },
+            None => None,
+        }
     }
-    pub fn set_balance(&self, addr: Address, bal: U256) -> Option<U256> {
-        match self.lookup_balance_trace_from_address(addr) {
+    pub fn set_balance(&self, addr: Address, related_addr: Address, bal: U256, token_addr: Address, sender_receiver: bool) -> Option<U256> {
+        match self.lookup_balance_trace_from_address(addr, token_addr) {
             Some(val) => {
                 let mut new_val = val.to_vec();
-                new_val.push(bal);
-                self.balance_traces.borrow_mut().insert(addr, new_val);
+                if sender_receiver {
+                    new_val.push((TransferDir::From(related_addr), bal));
+                }else{
+                    new_val.push((TransferDir::To(related_addr), bal));
+                }
+                
+                let mut inner_map = HashMap::new();
+                inner_map.insert(token_addr, new_val);
+                self.balance_traces.borrow_mut().insert(addr, inner_map);
                 Some(bal)
             },
             None => {
-                let new_val = vec![bal];
-                self.balance_traces.borrow_mut().insert(addr, new_val);
+                let mut new_val = Vec::new();
+                if sender_receiver {
+                    new_val.push((TransferDir::From(related_addr), bal));
+                }else{
+                    new_val.push((TransferDir::To(related_addr), bal));
+                }                
+                let mut inner_map = HashMap::new();
+                inner_map.insert(token_addr, new_val);
+                self.balance_traces.borrow_mut().insert(addr, inner_map);
                 Some(bal)
             },
         }
     }
-    pub fn identify_beneficiary (&self) -> Option<Vec<(Address, U256)>> {
+    pub fn set_token_flow(        
+        &self,
+        addrfrom: Address, 
+        addrto: Address, 
+        amt: U256,
+        token_addr: Address,
+    ) -> Option<U256> {
+        match CONTRACT_ADDRESSES.iter().position(|val| *val == token_addr) {
+            Some(_) => {
+                self.set_balance(addrfrom, addrto, amt, token_addr, true);
+                self.set_balance(addrto, addrfrom, amt, token_addr, false)
+            },
+            None => None,
+        }
+    }
+    pub fn identify_helper (&self) -> Option<Vec<(Address, Vec<(Address, bool, U256)>)>> {
         let mut ret = Vec::new();
         for (a, b) in self.balance_traces.borrow_mut().iter() {
             assert!(!b.is_empty());
-            if !b.is_empty() && b[0] < b[b.len()-1] {
-                ret.push((Address::from(*a), b[b.len()-1].saturating_sub(b[0])));
+            let mut inner_ret = Vec::new();
+            for (c, d) in b.iter() {
+                assert!(!d.is_empty());
+                let mut earn_flag = true;
+                let mut benefit = U256::zero();
+                for (dir, val) in d.iter() {
+                    match dir {
+                        TransferDir::From(_) => {
+                            if earn_flag {
+                                if *val < benefit {
+                                    earn_flag = true;
+                                    benefit = benefit.saturating_sub(*val);
+                                }else{
+                                    earn_flag = false;
+                                    benefit = val.saturating_sub(benefit);
+                                }
+                            }else{
+                                earn_flag = false;
+                                benefit = val.saturating_add(benefit);
+                            }
+                        },
+                        TransferDir::To(_) => {
+                            if earn_flag {
+                                earn_flag = true;
+                                benefit = val.saturating_add(benefit);
+                            }else{
+                                if *val < benefit {
+                                    earn_flag = false;
+                                    benefit = benefit.saturating_sub(*val);
+                                }else{
+                                    earn_flag = true;
+                                    benefit = val.saturating_sub(benefit);
+                                }
+                            }                            
+                        },
+                    }
+                }
+                inner_ret.push((*c, earn_flag, benefit));
             }
+            ret.push((Address::from(*a), inner_ret.to_vec()));
         } 
         match ret.is_empty() {
             true => None,
             false => Some(ret),
         }  
     }
-    pub fn identify_victim (&self) -> Option<Vec<(Address, U256)>> {
-        let mut ret = Vec::new();
-        for (a, b) in self.balance_traces.borrow_mut().iter() {
-            assert!(!b.is_empty());
-            if !b.is_empty() && b[0] > b[b.len()-1] {
-                ret.push((Address::from(*a), b[0].saturating_sub(b[b.len()-1])));
-            }
-        }  
-        match ret.is_empty() {
-            true => None,
-            false => Some(ret),
-        }  
+    pub fn identify_beneficiary (&self) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
+        match self.identify_helper() {
+            Some(ret_vec) => {
+                Some(
+                    ret_vec.iter().map(
+                        |val| (val.0, 
+                                val.1.iter().filter(|inner| inner.1 == true)
+                                            .map(|val| (val.0, val.2))
+                                            .collect()
+                              )
+                    )
+                    .collect()
+                )
+            },
+            None => None,
+        }
+    }
+    pub fn identify_victim (&self) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
+        match self.identify_helper() {
+            Some(ret_vec) => {
+                Some(
+                    ret_vec.iter().map(
+                        |val| (val.0, 
+                                val.1.iter().filter(|inner| inner.1 == false)
+                                            .map(|val| (val.0, val.2))
+                                            .collect()
+                              )
+                    )
+                    .collect()
+                )
+            },
+            None => None,
+        } 
     }
     pub fn assemable_deploy_transaction (&self) {
 

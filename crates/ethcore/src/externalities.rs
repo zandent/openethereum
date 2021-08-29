@@ -28,6 +28,9 @@ use vm::{
     CreateContractAddress, EnvInfo, Ext, MessageCallResult, ReturnData, Schedule, TrapKind,
 };
 
+// Flash loan
+use state::erc20macro::*;
+
 /// Policy for handling output data on `RETURN` opcode.
 pub enum OutputPolicy {
     /// Return reference to fixed sized output.
@@ -119,8 +122,18 @@ where
     V: VMTracer,
     B: StateBackend,
 {
-    fn set_balance(&self, sender: Address, addr: Address, bal: U256) -> Option<U256> {
-        self.state.set_balance_in_current_transaction(sender, addr, bal)
+    fn set_token_flow(&self, sender: Address, addrfrom: Address, addrto: Address, amt: U256, token_addr: Address) -> Option<U256> {
+        self.state.set_token_flow_in_current_transaction(sender, addrfrom, addrto, amt, token_addr)
+    }
+    fn set_balance_by_log(&self, sender: Address, data: Vec<H256>, bal: &[u8], token_addr: Address) -> Option<U256> {
+        //data[0]: hash
+        //data[1]: addressfrom
+        //data[2]: addressto
+        if data.len() == 3 && data[0] == *TRANSFER_EVENT_HASH {
+            self.state.set_token_flow_in_current_transaction(sender, Address::from(data[1]), Address::from(data[2]), U256::from(bal), token_addr)
+        }else{
+            None
+        }
     }
     fn initial_storage_at(&self, key: &H256) -> vm::Result<H256> {
         if self
@@ -448,19 +461,25 @@ where
         }
     }
 
-    fn log(&mut self, topics: Vec<H256>, data: &[u8]) -> vm::Result<()> {
+    fn log(&mut self, topics: Vec<H256>, data: &[u8], sender: Option<Address>) -> vm::Result<()> {
         use types::log_entry::LogEntry;
 
         if self.static_flag {
             return Err(vm::Error::MutableCallInStaticContext);
         }
-
+        let logs: Vec<H256> = topics.to_vec();
         let address = self.origin_info.address.clone();
         self.substate.logs.push(LogEntry {
             address: address,
             topics: topics,
             data: data.to_vec(),
         });
+        match sender {
+            Some(sender_addr) => {
+                self.set_balance_by_log(sender_addr, logs, &data.to_vec(), address.clone());
+            },
+            None => (),
+        }
 
         Ok(())
     }
@@ -800,7 +819,7 @@ mod tests {
                 &mut vm_tracer,
                 false,
             );
-            ext.log(log_topics, &log_data).unwrap();
+            ext.log(log_topics, &log_data, None).unwrap();
         }
 
         assert_eq!(setup.sub_state.logs.len(), 1);

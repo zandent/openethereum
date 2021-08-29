@@ -72,7 +72,7 @@ const incrementerToCall = new web3.eth.Contract(abi, contractAddr);
 //    console.log(`The current balance is: ${data}`);
 //    await new Promise(r => setTimeout(r, 2000));
 var _value = 3;
-const encoded = incrementerToCall.methods.acquire().encodeABI();
+const encoded = incrementerToCall.methods.acquire(addressTo, 17).encodeABI();
 console.log(`Calling the increment by ${_value} function in contract at address ${contractAddr}`);
 await web3.eth.getTransactionCount(addressFrom, function(error, txCount) {
    new_nonce = txCount;
