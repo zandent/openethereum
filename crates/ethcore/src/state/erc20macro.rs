@@ -19,6 +19,14 @@ lazy_static! {
                                                            //DAI
                                                            Address::from_str("6B175474E89094C44Da98b954EedeAC495271d0F").unwrap(), 
                                                           ];
+    //Token price $/0.0001USD rounded in 0.0001 dollar 
+    pub static ref TOKEN_USD_PRICES: Vec<U256> = vec![  //erc.sol for testing TODO: remove after done
+                                                        U256::from(2000),
+                                                        //ETH
+                                                        U256::from(978790),
+                                                        //DAI
+                                                        U256::from(1000),
+                                                    ];
     //keccak-256("balanceOf(address)") first four bytes
     pub static ref BALANCEOF_METHOD_ID: Vec<u8> = "70a08231".from_hex().unwrap();
     //keccak-256("transfer(address,uint256)") first four bytes
