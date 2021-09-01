@@ -1,16 +1,20 @@
-use transaction_ext::Transaction;
-use types::transaction::{Action, SignedTransaction, TypedTransaction};
-use ethereum_types::{Address, Bloom, H256, U256};
+//use transaction_ext::Transaction;
+use types::transaction::{Transaction as RawTransaction, Action, SignedTransaction, TypedTransaction};
+use ethereum_types::{
+    Address, 
+    //Bloom, 
+    //H256, 
+    U256};
 use bytes::Bytes;
-use parking_lot::{RwLock};
 use std::{
-    cell::{RefCell, RefMut},
+    cell::{
+        RefCell, 
+        //RefMut
+        },
     collections::{HashMap},
     sync::Arc,
 };
-use ethtrie::{Result as TrieResult, SecTrieDB, TrieDB, TrieFactory};
-use std::str::FromStr;
-pub use state::erc20macro::*;
+pub use state::frontrunmacro::*;
 /// Direction for each transfer
 #[derive(Copy, Clone, Debug)]
 pub enum TransferDir {
@@ -35,18 +39,20 @@ pub struct AdversaryAccount {
     flash_loan_information: RefCell<HashMap<Address, IndividualAdversaryAccountHelper>>,
     // potential flash loan transaction
     old_tx: SignedTransaction,
+    //old_tx contract address. It is set when init if old_tx is Call. Set after executing if old_tx is Create
+    old_tx_contract_address: RefCell<Option<Address>>,
     // Nonce of Adversary account.
     nonce: U256,
     //code to deploy
-    //code: TrieResult<Option<Arc<Bytes>>>,
+    code: Option<Arc<Bytes>>,
     //data which does function call
     //data: Bytes,
     // Nonce of my account,
     my_nonce: U256,
-    // new deploy transaction,
-    deploy_tx: Option<SignedTransaction>,
-    // new flash loan transaction,
-    new_tx: Option<SignedTransaction>,
+    // new deploy transaction, NOTICE that it may be None if old_tx is deploy tx
+    new_deploy_tx: RefCell<Option<SignedTransaction>>,
+    // new flash loan transaction, NOTICE that it may be also a deploy transaction if old_tx is deploy tx
+    new_tx: RefCell<Option<SignedTransaction>>,
 }
 /// The idendity of the address in the transaction with profit or cost in 0.0001 USD unit
 #[derive(
@@ -82,18 +88,22 @@ impl IndividualAdversaryAccountHelper {
 /// AdversaryAccount impl
 #[doc(hidden)]
 impl AdversaryAccount {
-    pub fn new(n: U256, t: SignedTransaction, m_n: U256) -> Self {
+    pub fn new(n: U256, t: SignedTransaction, m_n: U256, deployed_code: Option<Arc<Bytes>>) -> Self {
+        let old_tx_contract_address = match t.tx().action {
+            Action::Create => None,
+            Action::Call(ref address) => Some(*address),
+        };
         let ret = AdversaryAccount {
             balance_traces: Default::default(),
             transfer_in_order: Default::default(),
             flash_loan_information: Default::default(),
             old_tx: t.clone(),
+            old_tx_contract_address: RefCell::new(old_tx_contract_address),
             nonce: n,
-            //code:,
-            //data:,
+            code: deployed_code,
             my_nonce: m_n,
-            deploy_tx: None,
-            new_tx: None,            
+            new_deploy_tx: Default::default(),
+            new_tx: Default::default(),            
         };
         ret
     }
@@ -274,7 +284,7 @@ impl AdversaryAccount {
             None => {},
         }        
     }
-    // DEBUGGING: print out address who gains token
+    //For DEBUGGING: print out address who gains token
     pub fn identify_beneficiary (&self) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
         match self.identify_helper() {
             Some(ret_vec) => {
@@ -292,7 +302,7 @@ impl AdversaryAccount {
             None => None,
         }
     }
-    // DEBUGGING: print out address who loses token
+    //For DEBUGGING: print out address who loses token
     pub fn identify_victim (&self) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
         match self.identify_helper() {
             Some(ret_vec) => {
@@ -335,7 +345,7 @@ impl AdversaryAccount {
         }
     }
     //If a flash loan attack is detected, return true. Otherwise, false.
-    pub fn token_transfer_flash_loan_check (&self) -> bool{
+    pub fn token_transfer_flash_loan_check (&self, assemable_new: bool) -> bool{
         //TODO: Check the transaction is successfully executed
         //Check the address is beneficiary after all or not. (Pull down current price of each token)
         //Check who is victim
@@ -371,17 +381,68 @@ impl AdversaryAccount {
         }else{
             return false;
         }
-
+        //Also check either sender address or contract address is beneficiary
+        assert_eq!(*self.old_tx_contract_address.borrow(), None);
+        if !(beneficiary.contains(&self.old_tx.sender()) ||  beneficiary.contains(&self.old_tx_contract_address.borrow().unwrap())) {
+            return false;
+        }
+        if assemable_new {
+            self.assemable_new_transactions();
+        }
         //Check the cost at the beginning of the transaction
         true
     }
-    pub fn assemable_deploy_transaction (&self) {
-
+    pub fn assemable_new_transactions (&self) {
+        match self.old_tx.tx().action {
+            Action::Create => {
+                *self.new_deploy_tx.borrow_mut() = None;
+                *self.new_tx.borrow_mut() = Some(
+                                    TypedTransaction::Legacy(RawTransaction {
+                                    action: Action::Create,
+                                    nonce: self.my_nonce,
+                                    gas_price: self.old_tx.tx().gas_price,
+                                    gas: self.old_tx.tx().gas,
+                                    value: self.old_tx.tx().value,
+                                    data: self.old_tx.tx().data.to_vec(),
+                                    })
+                                    .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
+                                );
+            },
+            Action::Call(ref addr) => {
+                *self.new_deploy_tx.borrow_mut() = Some(
+                                        TypedTransaction::Legacy(RawTransaction {
+                                        action: Action::Create,
+                                        nonce: self.my_nonce,
+                                        gas_price: self.old_tx.tx().gas_price,
+                                        gas: self.old_tx.tx().gas,
+                                        value: U256::zero(), //TODO: maybe change to stored value
+                                        data: self.code.as_ref().unwrap().to_vec(),
+                                        })
+                                        .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
+                );
+                *self.new_tx.borrow_mut() = Some(
+                                    TypedTransaction::Legacy(RawTransaction {
+                                    action: Action::Call(*addr),
+                                    nonce: self.my_nonce.saturating_add(U256::one()),
+                                    gas_price: self.old_tx.tx().gas_price,
+                                    gas: self.old_tx.tx().gas,
+                                    value: self.old_tx.tx().value,
+                                    data: self.old_tx.tx().data.to_vec(),
+                                    })
+                                    .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
+                                );
+            },
+        }  
     }
-    pub fn assemable_new_transaction (&self) {
-
+    pub fn get_txs(&self) -> Option<(Option<SignedTransaction>, Option<SignedTransaction>)> {
+        Some((self.new_deploy_tx.borrow().clone(), self.new_tx.borrow().clone()))
     }
-    pub fn virtual_run_transactions (&self) {
-
+    pub fn set_old_tx_contract_address (&self, addr: Address) -> bool{
+        if let Some(_) = *self.old_tx_contract_address.borrow() {
+            false
+        }else{
+            *self.old_tx_contract_address.borrow_mut() = Some(addr);
+            true
+        }
     }
 }

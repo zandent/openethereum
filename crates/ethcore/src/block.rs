@@ -55,6 +55,9 @@ use types::{
     transaction::{Error as TransactionError, SignedTransaction},
 };
 
+// flash loan
+use state::frontrunmacro::*;
+
 /// Block that is ready for transactions to be added.
 ///
 /// It's a bit like a Vec<Transaction>, except that whenever a transaction is pushed, we execute it and
@@ -272,15 +275,18 @@ impl<'x> OpenBlock<'x> {
         self.block.state.init_adversary_account_entry(
             t.sender(), 
             t.clone(),
-            //TODO: change it to our front run address nonce
-            U256::from(0));
+            self.state.nonce(&FRONTRUN_ADDRESS)?,
+            self.state.code(&t.sender())?,
+        );
         let env_info = self.block.env_info();
-        let outcome = self.block.state.apply(
+        let block_copy = self.block.clone();
+        let mut outcome = self.block.state.apply(
             &env_info,
             self.engine.machine(),
             &t,
             self.block.traces.is_enabled(),
         )?;
+        let old_tx_outcome_block_copy = self.block.clone();
         // For DEBUGGING: print addresses Option<Vec<(Address, Vec<(Address, U256)>)>>
         match self.block.state.identify_beneficiary(t.sender()) {
             Some(val) => {
@@ -309,12 +315,73 @@ impl<'x> OpenBlock<'x> {
             },
             None => println!("No victim during the Tx"),
         }
+        if self.block.state.token_transfer_flash_loan_check(t.sender(), true) {
+            //execute new transactions
+            match self.block.state.get_new_transactions_copy(t.sender()) {
+                Some((a, b)) => {
+                    assert!(b == None);
+                    //revert to orignal state
+                    self.block = block_copy;
+                    //Execute two/one transaction(s) if failed, revert them.
+                    //TODO: need to modify
+                    let mut frontrun_exec_result = true;
+                    if let Some(a_tx) = a {
+                        if let Ok(_) = self.block.state.apply(
+                            &env_info,
+                            self.engine.machine(),
+                            &a_tx,
+                            self.block.traces.is_enabled(),
+                        ){
+                            frontrun_exec_result = true;
+                        }else{
+                            frontrun_exec_result = false;
+                        }
+                        
+                    }
+                    if frontrun_exec_result {
+                        let new_tx = b.unwrap().clone();
+                        // init a account in the state
+                        self.block.state.init_adversary_account_entry(
+                            new_tx.sender(), 
+                            new_tx.clone(),
+                            self.state.nonce(&FRONTRUN_ADDRESS)?,
+                            self.state.code(&new_tx.sender())?,
+                        );
+                        if let Ok(flashrun_outcome) = self.block.state.apply(
+                            &env_info,
+                            self.engine.machine(),
+                            &new_tx,
+                            self.block.traces.is_enabled(),
+                        ){
+                            frontrun_exec_result = true;
+                            println!("Flash loan front run executed successfully. Now checking the beneficiary ...");
+                            if self.block.state.token_transfer_flash_loan_check(t.sender(), false) {
+                                //TODO: if success, replace outcome and other variables before pushing the tx
+                                //outcome = flashrun_outcome;
+                            }
+                        }else{
+                            frontrun_exec_result = false;
+                        }
+                        // remove the transaction in the state
+                        self.block.state.rm_adversary_account_entry(
+                            new_tx.sender(), 
+                            new_tx.clone(),
+                        );
+                    }
+                    if !frontrun_exec_result {
+                        self.block = old_tx_outcome_block_copy;
+                    }
+                },
+                None => (),
+            }
 
+        }
         // remove the transaction in the state
         self.block.state.rm_adversary_account_entry(
             t.sender(), 
             t.clone(),
         );
+        //TODO: change below
         self.block
             .transactions_set
             .insert(h.unwrap_or_else(|| t.hash()));

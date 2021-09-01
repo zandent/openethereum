@@ -61,7 +61,7 @@ mod substate;
 #[doc(hidden)]
 pub mod adversaryaccount;
 #[doc(hidden)]
-pub mod erc20macro;
+pub mod frontrunmacro;
 
 pub mod backend;
 
@@ -406,10 +406,14 @@ impl<B: Backend> State<B> {
     }
 
     // flash loan
-    /// check entry existing or not
-
     /// update adversary account
-    pub fn init_adversary_account_entry(&mut self, addr: Address, tx: SignedTransaction, my_nonce: U256) -> Option<usize> {
+    pub fn init_adversary_account_entry(
+        &mut self, 
+        addr: Address, 
+        tx: SignedTransaction, 
+        my_nonce: U256,
+        deployed_code: Option<Arc<Bytes>>,
+    ) -> Option<usize> {
         println!("init adversary account entry for address: {:?}", addr);
         let (unverify_tx, _, _) = tx.clone().deconstruct();
         let hash = unverify_tx.clone().hash();
@@ -428,6 +432,7 @@ impl<B: Backend> State<B> {
                                     addr_nonce, 
                                     tx, 
                                     my_nonce,
+                                    deployed_code,
                                 )
                             )
                         );
@@ -446,6 +451,7 @@ impl<B: Backend> State<B> {
                             addr_nonce, 
                             tx, 
                             my_nonce,
+                            deployed_code,
                         )
                     )                    
                 );
@@ -493,7 +499,7 @@ impl<B: Backend> State<B> {
     ) -> Option<U256> {
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
             Some(val) => {
-                val[val.len()-1].1.set_token_flow(addrfrom, addrto, amt, token_addr)
+                val.last().unwrap().1.set_token_flow(addrfrom, addrto, amt, token_addr)
             },
             None => None,
         }
@@ -502,7 +508,7 @@ impl<B: Backend> State<B> {
     pub fn identify_beneficiary(&self, sender: Address) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
             Some(val) => {
-                val[val.len()-1].1.identify_beneficiary()
+                val.last().unwrap().1.identify_beneficiary()
             },
             None => None,
         }
@@ -511,10 +517,37 @@ impl<B: Backend> State<B> {
     pub fn identify_victim(&self, sender: Address) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
             Some(val) => {
-                val[val.len()-1].1.identify_victim()
+                val.last().unwrap().1.identify_victim()
             },
             None => None,
         }
+    }
+    /// check flash loan pattern
+    pub fn token_transfer_flash_loan_check (&self, sender: Address, assemable_new: bool) -> bool{
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.token_transfer_flash_loan_check(assemable_new)
+            },
+            None => false,
+        }        
+    }
+    /// get new transactions
+    pub fn get_new_transactions_copy (&self, sender: Address) -> Option<(Option<SignedTransaction>, Option<SignedTransaction>)>{
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.get_txs()
+            },
+            None => None,
+        }        
+    }
+    /// Set address if it is deployed transaction
+    pub fn set_old_tx_contract_address (&self, sender: Address, new_contract_addr: Address) -> bool{
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.set_old_tx_contract_address(new_contract_addr)
+            },
+            None => false,
+        }        
     }
     /// Creates new state with existing state root
     pub fn from_existing(

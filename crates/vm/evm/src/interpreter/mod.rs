@@ -980,7 +980,7 @@ impl<Cost: CostType> Interpreter<Cost> {
             | instructions::LOG2
             | instructions::LOG3
             | instructions::LOG4 => {
-                println!("Here is instructions::LOG! ===========================");
+                println!("================================Here is instructions::LOG ============================");
                 let no_of_topics = instruction
                     .log_topics()
                     .expect("log_topics always return some for LOG* instructions; qed");

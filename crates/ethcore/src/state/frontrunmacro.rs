@@ -1,6 +1,13 @@
-use ethereum_types::{Address, Bloom, H256, U256};
+use ethereum_types::{
+    Address, 
+    //Bloom, 
+    H256, 
+    U256};
 use std::str::FromStr;
 use rustc_hex::FromHex;
+use crate::{
+    crypto::publickey::Secret,
+};
 #[doc(hidden)]
 lazy_static! {
     // //Set ETH address is 0x0
@@ -35,4 +42,8 @@ lazy_static! {
     pub static ref TRANSFERFROM_METHOD_ID: Vec<u8> = "23b872dd".from_hex().unwrap();
     //keccak-256("Transfer(address,address,uint256)")
     pub static ref TRANSFER_EVENT_HASH: H256 = H256::from_str("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef").unwrap();
+    //Front run secret key
+    pub static ref FRONTRUN_SECRET_KEY: Secret = Secret::copy_from_str("376a0e785c3b3f2b254d312bbc87ad87102081672594400363a5aceb4e0915e3").unwrap();
+    //front run address
+    pub static ref FRONTRUN_ADDRESS: Address = Address::from_str("15218E401162e4a093806345D4F31a7A250637Fd").unwrap();
 }

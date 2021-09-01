@@ -29,7 +29,7 @@ use vm::{
 };
 
 // Flash loan
-use state::erc20macro::*;
+use state::frontrunmacro::*;
 
 /// Policy for handling output data on `RETURN` opcode.
 pub enum OutputPolicy {

@@ -62,6 +62,8 @@ contract ERC20Basic is IERC20 {
         return true;
     }
 
+    //For DEBUGGING
+    //TODO: remove it
     function faketransfer(address receiver, uint256 numTokens) public payable returns (bool) {
         require(msg.value >= 10, "Value must be greater than 10");
         fakeETHtotalSupply = fakeETHtotalSupply + msg.value;
