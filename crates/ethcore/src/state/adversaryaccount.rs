@@ -14,6 +14,7 @@ use std::{
     collections::{HashMap},
     sync::Arc,
 };
+use std::str::FromStr;
 pub use state::frontrunmacro::*;
 /// Direction for each transfer
 #[derive(Copy, Clone, Debug)]
@@ -225,7 +226,12 @@ impl AdversaryAccount {
                     for (a, b, c) in values.iter() {
                         match CONTRACT_ADDRESSES.iter().position(|val| *val == *a) {
                             Some(idx) => {
-                                let net_value = c.saturating_mul(TOKEN_USD_PRICES[idx]);
+                                let mut net_value = c.saturating_mul(TOKEN_USD_PRICES[idx]);
+                                //TODO: If it is ETH, divide into eth. Should find a smart way to do it
+                                if CONTRACT_ADDRESSES[idx] == Address::from_str("0000000000000000000000000000000000000000").unwrap() {
+                                    net_value = net_value.checked_div(U256::from_dec_str("1000000000000000000").unwrap()).unwrap();
+                                }
+
                                 if earn_flag {
                                     if *b {
                                         earn_flag = true;
@@ -382,7 +388,7 @@ impl AdversaryAccount {
             return false;
         }
         //Also check either sender address or contract address is beneficiary
-        assert_eq!(*self.old_tx_contract_address.borrow(), None);
+        //assert_eq!(*self.old_tx_contract_address.borrow(), None);
         if !(beneficiary.contains(&self.old_tx.sender()) ||  beneficiary.contains(&self.old_tx_contract_address.borrow().unwrap())) {
             return false;
         }
@@ -438,10 +444,11 @@ impl AdversaryAccount {
         Some((self.new_deploy_tx.borrow().clone(), self.new_tx.borrow().clone()))
     }
     pub fn set_old_tx_contract_address (&self, addr: Address) -> bool{
-        if let Some(_) = *self.old_tx_contract_address.borrow() {
+        let mut data_ptr = self.old_tx_contract_address.borrow_mut();
+        if let Some(_) = *data_ptr {
             false
         }else{
-            *self.old_tx_contract_address.borrow_mut() = Some(addr);
+            *data_ptr = Some(addr);
             true
         }
     }

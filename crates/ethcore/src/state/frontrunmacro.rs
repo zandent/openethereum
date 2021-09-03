@@ -30,7 +30,7 @@ lazy_static! {
     pub static ref TOKEN_USD_PRICES: Vec<U256> = vec![  //erc.sol for testing TODO: remove after done
                                                         U256::from(2000),
                                                         //ETH
-                                                        U256::from(978790),
+                                                        U256::from(3935600),
                                                         //DAI
                                                         U256::from(1000),
                                                     ];

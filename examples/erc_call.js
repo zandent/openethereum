@@ -71,7 +71,7 @@ console.log("now nonce is :", new_nonce);
          data: encoded,
          gas: '1000000',
          nonce: new_nonce + 1,
-         value: '39',
+         value: '5000000000000000000',
       },
       privKey
    );
