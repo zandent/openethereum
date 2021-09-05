@@ -19,7 +19,7 @@ lazy_static! {
                                                                       Address::from_str("0000000000000000000000000000000000000000").unwrap(),
                                                                      ];
     //Token Address Vec
-    pub static ref CONTRACT_ADDRESSES: Vec<Address> = vec![//erc.sol for testing TODO: remove after done
+    pub static ref CONTRACT_ADDRESSES: Vec<Address> = vec![//"Token A" from erc.sol for testing TODO: remove after done
                                                            Address::from_str("b4c79daB8f259C7Aee6E5b2Aa729821864227e84").unwrap(),
                                                            //ETH
                                                            Address::from_str("0000000000000000000000000000000000000000").unwrap(),
