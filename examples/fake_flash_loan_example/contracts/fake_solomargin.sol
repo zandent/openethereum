@@ -181,8 +181,10 @@ library Token {
         IErc20(token).fake_burn(owner, numTokens);
     }
 }
-
-contract fakeSoloMargin {
+interface IfakeSoloMargin {
+    function operate(address addr, bytes memory data, uint256 loan, address token_a) external;
+}
+contract fakeSoloMargin is IfakeSoloMargin{
     address public Token_A;
     uint256 public total_supply;
     constructor (address token_a, uint256 amt) public {
@@ -190,7 +192,7 @@ contract fakeSoloMargin {
         total_supply = amt;
         Token.fake_burn(Token_A, address(this), total_supply);
     }
-    function operate (address addr, bytes memory data, uint256 loan, address token_a) public {
+    function operate (address addr, bytes memory data, uint256 loan, address token_a) public override {
         require(loan <= total_supply);
         require(Token_A == token_a);
         Token.transfer(Token_A, addr, loan);

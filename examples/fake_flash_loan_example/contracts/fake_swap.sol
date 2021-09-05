@@ -181,8 +181,11 @@ library Token {
         IErc20(token).fake_burn(owner, numTokens);
     }
 }
-
-contract fakeSwap {
+interface IfakeSwap {
+    function swap_from_A_to_B (address addr, uint256 amt_a) external returns (uint256);
+    function swap_from_B_to_A (address addr, uint256 amt_b) external returns (uint256);
+}
+contract fakeSwap is IfakeSwap{
     address public Token_A;
     uint256 public total_supply_A;
     address public Token_B;
@@ -199,7 +202,7 @@ contract fakeSwap {
         SWAPRATIO_A_TO_B = ratio_a_to_b;
     }
     //Should approval Address(this) for TOKEN_A
-    function swap_from_A_to_B (address addr, uint256 amt_a) public returns (uint256) {
+    function swap_from_A_to_B (address addr, uint256 amt_a) override public returns (uint256) {
         require(amt_a <= total_supply_A);
         require(amt_a*SWAPRATIO_A_TO_B <= total_supply_B);
         total_supply_A += amt_a;
@@ -209,7 +212,7 @@ contract fakeSwap {
         return amt_a*SWAPRATIO_A_TO_B;
     }
     //Should approval Address(this) for TOKEN_B
-    function swap_from_B_to_A (address addr, uint256 amt_b) public returns (uint256) {
+    function swap_from_B_to_A (address addr, uint256 amt_b) override public returns (uint256) {
         require(amt_b <= total_supply_B);
         require(amt_b/SWAPRATIO_A_TO_B <= total_supply_A);
         total_supply_B += amt_b;

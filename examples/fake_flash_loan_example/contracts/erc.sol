@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.6.0;
 
-interface IERC20 {
+interface IErc20 {
 
     function totalSupply() external view returns (uint256);
     function balanceOf(address account) external view returns (uint256);
@@ -19,7 +19,7 @@ interface IERC20 {
 }
 
 
-contract ERC20Basic is IERC20 {
+contract ERC20Basic is IErc20 {
 
     string public constant name = "ERC20Basic";
     string public constant symbol = "ERC";
