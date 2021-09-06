@@ -142,7 +142,7 @@ library Token {
         approve(
             token,
             spender,
-            uint256(-1)
+            type(uint128).max
         );
     }
 
@@ -190,15 +190,15 @@ contract fakeSwap is IfakeSwap{
     uint256 public total_supply_A;
     address public Token_B;
     uint256 public total_supply_B;
-    uint256 SWAPRATIO_A_TO_B; //1 A can get SWAPRATIO_A_TO_B B
+    uint256 public SWAPRATIO_A_TO_B; //1 A can get SWAPRATIO_A_TO_B B
 
     constructor (address token_a, uint256 amt_a, address token_b, uint256 amt_b, uint256 ratio_a_to_b) public {
         Token_A = token_a;
         total_supply_A = amt_a;
-        Token.fake_burn(Token_A, address(this), total_supply_A);
+        Token.fake_mint(Token_A, address(this), total_supply_A);
         Token_B = token_b;
         total_supply_B = amt_b;
-        Token.fake_burn(Token_B, address(this), total_supply_B);
+        Token.fake_mint(Token_B, address(this), total_supply_B);
         SWAPRATIO_A_TO_B = ratio_a_to_b;
     }
     //Should approval Address(this) for TOKEN_A

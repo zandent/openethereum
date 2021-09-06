@@ -142,7 +142,7 @@ library Token {
         approve(
             token,
             spender,
-            uint256(-1)
+            type(uint128).max
         );
     }
 
@@ -190,7 +190,7 @@ contract fakeSoloMargin is IfakeSoloMargin{
     constructor (address token_a, uint256 amt) public {
         Token_A = token_a;
         total_supply = amt;
-        Token.fake_burn(Token_A, address(this), total_supply);
+        Token.fake_mint(Token_A, address(this), total_supply);
     }
     function operate (address addr, bytes memory data, uint256 loan, address token_a) public override {
         require(loan <= total_supply);
