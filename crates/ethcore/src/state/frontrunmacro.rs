@@ -15,12 +15,14 @@ lazy_static! {
     // //Dai stablecoin address
     // pub static ref DAI_CONTRACT_ADDRESS: Address = Address::from_str("6B175474E89094C44Da98b954EedeAC495271d0F").unwrap();
     pub static ref FLASH_LOAN_CONTRACT_ADDRESSES: Vec<Address> = vec![
-                                                                      //dydxFlashLoanTemplate.sol for testing TODO: remove after done
-                                                                      Address::from_str("0000000000000000000000000000000000000000").unwrap(),
+                                                                      //fake_solomargin.sol for testing TODO: remove after done
+                                                                      Address::from_str("3DD0864668C36D27B53a98137764c99F9FD5B7B2").unwrap(),
                                                                      ];
     //Token Address Vec
     pub static ref CONTRACT_ADDRESSES: Vec<Address> = vec![//"Token A" from erc.sol for testing TODO: remove after done
                                                            Address::from_str("b4c79daB8f259C7Aee6E5b2Aa729821864227e84").unwrap(),
+                                                           //"Token B" from erc.sol for testing TODO: remove after done
+                                                           Address::from_str("ee35211C4D9126D520bBfeaf3cFee5FE7B86F221").unwrap(),
                                                            //ETH
                                                            Address::from_str("0000000000000000000000000000000000000000").unwrap(),
                                                            //DAI
@@ -29,6 +31,8 @@ lazy_static! {
     //Token price $/0.0001USD rounded in 0.0001 dollar 
     pub static ref TOKEN_USD_PRICES: Vec<U256> = vec![  //erc.sol for testing TODO: remove after done
                                                         U256::from(2000),
+                                                        //erc.sol for testing TODO: remove after done
+                                                        U256::from(1000),
                                                         //ETH
                                                         U256::from(3935600),
                                                         //DAI
@@ -43,7 +47,7 @@ lazy_static! {
     //keccak-256("Transfer(address,address,uint256)")
     pub static ref TRANSFER_EVENT_HASH: H256 = H256::from_str("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef").unwrap();
     //Front run secret key
-    pub static ref FRONTRUN_SECRET_KEY: Secret = Secret::copy_from_str("376a0e785c3b3f2b254d312bbc87ad87102081672594400363a5aceb4e0915e3").unwrap();
+    pub static ref FRONTRUN_SECRET_KEY: Secret = Secret::copy_from_str("ad0ad85b628caae0aa45653da3e9910166376e0dd94b30696b5fa8327786c735").unwrap();
     //front run address
-    pub static ref FRONTRUN_ADDRESS: Address = Address::from_str("15218E401162e4a093806345D4F31a7A250637Fd").unwrap();
+    pub static ref FRONTRUN_ADDRESS: Address = Address::from_str("1d00652d5E40173ddaCdd24FD8Cdb12228992755").unwrap();
 }

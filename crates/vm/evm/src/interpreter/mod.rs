@@ -391,7 +391,7 @@ impl<Cost: CostType> Interpreter<Cost> {
                 ////////////////////////////////////////////////////
                 // Flash loan projects
                 //TODO: print for debugging. remove when project ends
-                println!("exec instr: {:?}", instruction);
+                //println!("exec instr: {:?}", instruction);
                 // Flash loan projects
                 ////////////////////////////////////////////////////
                 let info = instruction.info();
@@ -980,7 +980,8 @@ impl<Cost: CostType> Interpreter<Cost> {
             | instructions::LOG2
             | instructions::LOG3
             | instructions::LOG4 => {
-                println!("================================Here is instructions::LOG ============================");
+                //For DEBUGGING: remove it
+                //println!("================================Here is instructions::LOG ============================");
                 let no_of_topics = instruction
                     .log_topics()
                     .expect("log_topics always return some for LOG* instructions; qed");

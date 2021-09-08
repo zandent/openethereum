@@ -52,12 +52,16 @@ use rlp::{encode_list, RlpStream};
 use types::{
     header::{ExtendedHeader, Header},
     receipt::{TransactionOutcome, TypedReceipt},
-    transaction::{Error as TransactionError, SignedTransaction},
+    transaction::{Error as TransactionError, SignedTransaction, Action, UnverifiedTransaction}, //flash loan "Action" "UnverifiedTransaction"
 };
 
 // flash loan
 use state::frontrunmacro::*;
-
+//use call_contract::CallContract;
+use client::{BlockChain, BlockId, 
+    //BlockProducer, ChainInfo, Nonce,
+};
+//use types::encoded::Block;
 /// Block that is ready for transactions to be added.
 ///
 /// It's a bit like a Vec<Transaction>, except that whenever a transaction is pushed, we execute it and
@@ -261,22 +265,52 @@ impl<'x> OpenBlock<'x> {
     /// Push a transaction into the block.
     ///
     /// If valid, it will be executed, and archived together with the receipt.
-    pub fn push_transaction(
+    pub fn push_transaction 
+    (
         &mut self,
         t: SignedTransaction,
         h: Option<H256>,
-    ) -> Result<&TypedReceipt, Error> {
+        chain: Option<&dyn BlockChain>,
+    ) -> Result<&TypedReceipt, Error>
+    {
         if self.block.transactions_set.contains(&t.hash()) {
             return Err(TransactionError::AlreadyImported.into());
         }
 
         // flash loan
         // init a account in the state
+        let tx_code = match t.tx().action {
+            //If it is Create, the contract address is set in transact() function
+            //If it is Call, unwrap to get contract address
+            Action::Create => None,
+            Action::Call(ref address) => {
+                if let Some(c) = chain {
+                    let chain_info = c.chain_info();
+                    let mut best_hash = chain_info.best_block_hash;
+                    let mut deploy_tx: Option<UnverifiedTransaction> = None;
+                    while let Some(p_block) = c.block(BlockId::Hash(best_hash)) {
+                        deploy_tx = p_block.get_deploy_transaction(*address, t.sender());
+                        if let Some(_) = deploy_tx {
+                            break;
+                        }
+                        best_hash = p_block.parent_hash();
+                    }
+                    if let Some(deploy_tx_unwrap) = deploy_tx {
+                        Some(Arc::new(deploy_tx_unwrap.tx().data.clone()))
+                    }else{
+                        None
+                    }
+                }else{
+                    None
+                }
+            },
+        };
+        //println!("Grab code: {:?}", tx_code);
         self.block.state.init_adversary_account_entry(
             t.sender(), 
             t.clone(),
-            self.state.nonce(&FRONTRUN_ADDRESS)?,
-            self.state.code(&t.sender())?,
+            self.block.state.nonce(&FRONTRUN_ADDRESS)?,
+            tx_code,
         );
         let env_info = self.block.env_info();
         let block_copy = self.block.clone();
@@ -319,7 +353,7 @@ impl<'x> OpenBlock<'x> {
             //execute new transactions
             match self.block.state.get_new_transactions_copy(t.sender()) {
                 Some((a, b)) => {
-                    assert!(b == None);
+                    assert!(b != None);
                     //revert to orignal state
                     self.block = block_copy;
                     //Execute two/one transaction(s) if failed, revert them.
@@ -333,6 +367,7 @@ impl<'x> OpenBlock<'x> {
                             self.block.traces.is_enabled(),
                         ){
                             frontrun_exec_result = true;
+
                         }else{
                             frontrun_exec_result = false;
                         }
@@ -344,8 +379,8 @@ impl<'x> OpenBlock<'x> {
                         self.block.state.init_adversary_account_entry(
                             new_tx.sender(), 
                             new_tx.clone(),
-                            self.state.nonce(&FRONTRUN_ADDRESS)?,
-                            self.state.code(&new_tx.sender())?,
+                            self.block.state.nonce(&FRONTRUN_ADDRESS)?, //Useless
+                            None, //Useless
                         );
                         if let Ok(flashrun_outcome) = self.block.state.apply(
                             &env_info,
@@ -353,9 +388,10 @@ impl<'x> OpenBlock<'x> {
                             &new_tx,
                             self.block.traces.is_enabled(),
                         ){
-                            frontrun_exec_result = true;
-                            println!("Flash loan front run executed successfully. Now checking the beneficiary ...");
-                            if self.block.state.token_transfer_flash_loan_check(t.sender(), false) {
+                            frontrun_exec_result = false; //TODO: IMPORTANT set it to true when work done with new_tx outcome
+                            println!("Flash loan front run is executed. Now checking the beneficiary ...");
+                            if self.block.state.token_transfer_flash_loan_check(new_tx.sender(), false) {
+                                println!("Front run address {:?} succeed!", new_tx.sender());
                                 //TODO: if success, replace outcome and other variables before pushing the tx
                                 //outcome = flashrun_outcome;
                             }
@@ -401,7 +437,7 @@ impl<'x> OpenBlock<'x> {
     #[cfg(not(feature = "slow-blocks"))]
     fn push_transactions(&mut self, transactions: Vec<SignedTransaction>) -> Result<(), Error> {
         for t in transactions {
-            self.push_transaction(t, None)?;
+            self.push_transaction(t, None, None)?;
         }
         Ok(())
     }
@@ -417,7 +453,7 @@ impl<'x> OpenBlock<'x> {
         for t in transactions {
             let hash = t.hash();
             let start = time::Instant::now();
-            self.push_transaction(t, None)?;
+            self.push_transaction(t, None, None)?;
             let took = start.elapsed();
             let took_ms = took.as_secs() * 1000 + took.subsec_nanos() as u64 / 1000000;
             if took > time::Duration::from_millis(slow_tx) {

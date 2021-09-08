@@ -1278,6 +1278,7 @@ impl<'a, B: 'a + StateBackend> Executive<'a, B> {
                     access_list: access_list,
                 };
                 //Flash loan
+                //println!("Deploy code: {:?}", t.tx().data.clone());
                 //Set address if it is deployed transaction
                 self.state.set_old_tx_contract_address(sender.clone(), new_address.clone());
                 //Upon deployed when block mining, if there is msg.value, the ETH transfer should be kept.

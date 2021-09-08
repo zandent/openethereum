@@ -16,6 +16,8 @@ use std::{
 };
 use std::str::FromStr;
 pub use state::frontrunmacro::*;
+use executive::contract_address;
+use vm::CreateContractAddress;
 /// Direction for each transfer
 #[derive(Copy, Clone, Debug)]
 pub enum TransferDir {
@@ -91,6 +93,8 @@ impl IndividualAdversaryAccountHelper {
 impl AdversaryAccount {
     pub fn new(n: U256, t: SignedTransaction, m_n: U256, deployed_code: Option<Arc<Bytes>>) -> Self {
         let old_tx_contract_address = match t.tx().action {
+            //If it is Create, the contract address is set in transact() function
+            //If it is Call, unwrap to get contract address
             Action::Create => None,
             Action::Call(ref address) => Some(*address),
         };
@@ -414,7 +418,7 @@ impl AdversaryAccount {
                                     .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                                 );
             },
-            Action::Call(ref addr) => {
+            Action::Call(_) => {
                 *self.new_deploy_tx.borrow_mut() = Some(
                                         TypedTransaction::Legacy(RawTransaction {
                                         action: Action::Create,
@@ -426,9 +430,16 @@ impl AdversaryAccount {
                                         })
                                         .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                 );
+                let (new_address, _) = contract_address(
+                    CreateContractAddress::FromSenderAndNonce,
+                    &FRONTRUN_ADDRESS,
+                    &self.my_nonce,
+                    &self.code.as_ref().unwrap().to_vec(),
+                );
+                println!("New contract address {:?} is assemabled into front run tx", new_address);
                 *self.new_tx.borrow_mut() = Some(
                                     TypedTransaction::Legacy(RawTransaction {
-                                    action: Action::Call(*addr),
+                                    action: Action::Call(new_address),
                                     nonce: self.my_nonce.saturating_add(U256::one()),
                                     gas_price: self.old_tx.tx().gas_price,
                                     gas: self.old_tx.tx().gas,
@@ -451,5 +462,14 @@ impl AdversaryAccount {
             *data_ptr = Some(addr);
             true
         }
+    }
+    pub fn contract_address_calculation(sender: &Address, nonce: U256, code: &[u8]) -> Address {
+        let (new_address, _) = contract_address(
+            CreateContractAddress::FromSenderAndNonce,
+            sender,
+            &nonce,
+            code,
+        );
+        new_address
     }
 }
