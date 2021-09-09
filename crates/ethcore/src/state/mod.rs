@@ -497,13 +497,13 @@ impl<B: Backend> State<B> {
     /// Set token flow by two addresses
     pub fn set_token_flow_in_current_transaction(
         &self, 
-        sender: Address, 
+        _sender: Address, 
         addrfrom: Address, 
         addrto: Address, 
         amt: U256,
         token_addr: Address,
     ) -> Option<U256> {
-        println!("msg.sender {:?} addrfrom {:?} addrto {:?} amt {:?} token_addr {:?}", sender, addrfrom, addrto, amt, token_addr);
+        debug!("msg.sender {:?} addrfrom {:?} addrto {:?} amt {:?} token_addr {:?}", _sender, addrfrom, addrto, amt, token_addr);
         let acutal_sender: Address = *self.current_flash_loan_sender_address.borrow_mut();
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&acutal_sender).map(|value| value) {
             Some(val) => {
