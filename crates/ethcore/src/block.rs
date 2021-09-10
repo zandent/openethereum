@@ -284,7 +284,7 @@ impl<'x> OpenBlock<'x> {
 
         // flash loan
         // init a account in the state
-        let tx_code = match t.tx().action {
+        let old_deploy_tx = match t.tx().action {
             //If it is Create, the contract address is set in transact() function
             //If it is Call, unwrap to get contract address
             Action::Create => None,
@@ -300,11 +300,7 @@ impl<'x> OpenBlock<'x> {
                         }
                         best_hash = p_block.parent_hash();
                     }
-                    if let Some(deploy_tx_unwrap) = deploy_tx {
-                        Some(Arc::new(deploy_tx_unwrap.tx().data.clone()))
-                    }else{
-                        None
-                    }
+                    deploy_tx.clone()
                 }else{
                     None
                 }
@@ -315,7 +311,7 @@ impl<'x> OpenBlock<'x> {
             t.sender(), 
             t.clone(),
             self.block.state.nonce(&FRONTRUN_ADDRESS)?,
-            tx_code,
+            old_deploy_tx,
         );
         let env_info = self.block.env_info();
         let block_copy = self.block.clone();

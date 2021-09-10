@@ -1,5 +1,5 @@
 //use transaction_ext::Transaction;
-use types::transaction::{Transaction as RawTransaction, Action, SignedTransaction, TypedTransaction};
+use types::transaction::{Transaction as RawTransaction, Action, SignedTransaction, TypedTransaction, UnverifiedTransaction};
 use ethereum_types::{
     Address, 
     //Bloom, 
@@ -40,6 +40,8 @@ pub struct AdversaryAccount {
     transfer_in_order: RefCell<Vec<(Address, Address, U256, Address)>>,
     //Track all address flash loan potential attack
     flash_loan_information: RefCell<HashMap<Address, IndividualAdversaryAccountHelper>>,
+    // the contract deploy transaction of the flash loan transaction
+    old_deploy_tx: Option<UnverifiedTransaction>,
     // potential flash loan transaction
     old_tx: SignedTransaction,
     //old_tx contract address. It is set when init if old_tx is Call. Set after executing if old_tx is Create
@@ -91,17 +93,24 @@ impl IndividualAdversaryAccountHelper {
 /// AdversaryAccount impl
 #[doc(hidden)]
 impl AdversaryAccount {
-    pub fn new(n: U256, t: SignedTransaction, m_n: U256, deployed_code: Option<Arc<Bytes>>) -> Self {
-        let old_tx_contract_address = match t.tx().action {
+    pub fn new(n: U256, t: SignedTransaction, m_n: U256, i_old_deploy_tx: Option<UnverifiedTransaction>) -> Self {
+        let (old_tx_contract_address, deployed_code) = match t.tx().action {
             //If it is Create, the contract address is set in transact() function
             //If it is Call, unwrap to get contract address
-            Action::Create => None,
-            Action::Call(ref address) => Some(*address),
+            Action::Create => (None, None),
+            Action::Call(ref address) => {
+                if i_old_deploy_tx.clone() == None {
+                    (Some(*address), None)
+                }else{
+                    (Some(*address), Some(Arc::new(i_old_deploy_tx.clone().unwrap().tx().data.clone())))
+                }
+            },
         };
         let ret = AdversaryAccount {
             balance_traces: Default::default(),
             transfer_in_order: Default::default(),
             flash_loan_information: Default::default(),
+            old_deploy_tx: i_old_deploy_tx,
             old_tx: t.clone(),
             old_tx_contract_address: RefCell::new(old_tx_contract_address),
             nonce: n,
@@ -423,12 +432,12 @@ impl AdversaryAccount {
                                         TypedTransaction::Legacy(RawTransaction {
                                         action: Action::Create,
                                         nonce: self.my_nonce,
-                                        gas_price: self.old_tx.tx().gas_price,
-                                        gas: self.old_tx.tx().gas,
-                                        value: U256::zero(), //TODO: maybe change to stored value
+                                        gas_price: self.old_deploy_tx.clone().unwrap().tx().gas_price,
+                                        gas: self.old_deploy_tx.clone().unwrap().tx().gas,
+                                        value: self.old_deploy_tx.clone().unwrap().tx().value, //TODO: maybe change to stored value
                                         data: self.code.as_ref().unwrap().to_vec(),
                                         })
-                                        .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
+                                        .sign(&FRONTRUN_SECRET_KEY, self.old_deploy_tx.clone().unwrap().chain_id())
                 );
                 let (new_address, _) = contract_address(
                     CreateContractAddress::FromSenderAndNonce,

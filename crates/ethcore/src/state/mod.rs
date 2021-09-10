@@ -40,7 +40,7 @@ use types::{
     basic_account::BasicAccount,
     receipt::{LegacyReceipt, TransactionOutcome, TypedReceipt},
     state_diff::StateDiff,
-    transaction::SignedTransaction,
+    transaction::{SignedTransaction, UnverifiedTransaction,},
 };
 
 use vm::EnvInfo;
@@ -416,7 +416,7 @@ impl<B: Backend> State<B> {
         addr: Address, 
         tx: SignedTransaction, 
         my_nonce: U256,
-        deployed_code: Option<Arc<Bytes>>,
+        deployed_tx: Option<UnverifiedTransaction>,
     ) -> Option<usize> {
         println!("init adversary account entry for address: {:?}", addr);
         //set current addr for current transaction
@@ -438,7 +438,7 @@ impl<B: Backend> State<B> {
                                     addr_nonce, 
                                     tx, 
                                     my_nonce,
-                                    deployed_code,
+                                    deployed_tx,
                                 )
                             )
                         );
@@ -457,7 +457,7 @@ impl<B: Backend> State<B> {
                             addr_nonce, 
                             tx, 
                             my_nonce,
-                            deployed_code,
+                            deployed_tx,
                         )
                     )                    
                 );
