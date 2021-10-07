@@ -241,7 +241,7 @@ impl AdversaryAccount {
                             Some(idx) => {
                                 let mut net_value = c.saturating_mul(TOKEN_USD_PRICES[idx]);
                                 //TODO: If it is ETH, divide into eth. Should find a smart way to do it
-                                if CONTRACT_ADDRESSES[idx] == Address::from_str("0000000000000000000000000000000000000000").unwrap() {
+                                if CONTRACT_ADDRESSES[idx] == Address::from_str("0000000000000000000000000000000000000001").unwrap() {
                                     net_value = net_value.checked_div(U256::from_dec_str("1000000000000000000").unwrap()).unwrap();
                                 }
 
@@ -357,7 +357,7 @@ impl AdversaryAccount {
                 None => (),
             }
         }
-        if flash_loan_end.is_empty() && flash_loan_end.len() == flash_loan_start.len(){
+        if flash_loan_end.is_empty() || flash_loan_end.len() != flash_loan_start.len(){
             None
         }else{
             Some((flash_loan_start, flash_loan_end))

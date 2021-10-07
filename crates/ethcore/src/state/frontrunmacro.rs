@@ -11,7 +11,7 @@ use crate::{
 #[doc(hidden)]
 lazy_static! {
     // //Set ETH address is 0x0
-    // pub static ref ETH_CONTRACT_ADDRESS: Address = Address::from_str("0000000000000000000000000000000000000000").unwrap();
+    // pub static ref ETH_CONTRACT_ADDRESS: Address = Address::from_str("0000000000000000000000000000000000000001").unwrap();
     // //Dai stablecoin address
     // pub static ref DAI_CONTRACT_ADDRESS: Address = Address::from_str("6B175474E89094C44Da98b954EedeAC495271d0F").unwrap();
     pub static ref FLASH_LOAN_CONTRACT_ADDRESSES: Vec<Address> = vec![
@@ -24,7 +24,7 @@ lazy_static! {
                                                            //"Token B" from erc.sol for testing TODO: remove after done
                                                            Address::from_str("ee35211C4D9126D520bBfeaf3cFee5FE7B86F221").unwrap(),
                                                            //ETH
-                                                           Address::from_str("0000000000000000000000000000000000000000").unwrap(),
+                                                           Address::from_str("0000000000000000000000000000000000000001").unwrap(),
                                                            //DAI
                                                            Address::from_str("6B175474E89094C44Da98b954EedeAC495271d0F").unwrap(), 
                                                           ];

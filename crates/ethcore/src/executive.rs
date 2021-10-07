@@ -1288,7 +1288,7 @@ impl<'a, B: 'a + StateBackend> Executive<'a, B> {
                         sender.clone(), 
                         new_address.clone(), 
                         t.tx().value, 
-                        Address::from_str("0000000000000000000000000000000000000000").unwrap()
+                        Address::from_str("0000000000000000000000000000000000000001").unwrap()
                     );
                 }
                 let res = self.create(params, &mut substate, &mut tracer, &mut vm_tracer);
@@ -1323,7 +1323,7 @@ impl<'a, B: 'a + StateBackend> Executive<'a, B> {
                         sender.clone(), 
                         address.clone(), 
                         t.tx().value, 
-                        Address::from_str("0000000000000000000000000000000000000000").unwrap()
+                        Address::from_str("0000000000000000000000000000000000000001").unwrap()
                     );
                 }
                 let res = self.call(params, &mut substate, &mut tracer, &mut vm_tracer);
