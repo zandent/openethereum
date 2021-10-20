@@ -38,7 +38,6 @@ node_modules
 
 # Build artifacts
 out/
-out_erc/
 
 .vscode
 rls/
