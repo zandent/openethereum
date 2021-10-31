@@ -897,7 +897,7 @@ impl<Cost: CostType> Interpreter<Cost> {
                                 if val > U256::zero() {
                                     println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
                                     sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
-                                    ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000000").unwrap());
+                                    ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000001").unwrap());
                                 }
                             },
                             None => (),
@@ -933,7 +933,7 @@ impl<Cost: CostType> Interpreter<Cost> {
                                 if val > U256::zero() {
                                     println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
                                     sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
-                                    ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000000").unwrap());
+                                    ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000001").unwrap());
                                 }
                             },
                             None => (),
