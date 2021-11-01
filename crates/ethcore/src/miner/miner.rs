@@ -513,10 +513,24 @@ impl Miner {
         let schedule = self.engine.schedule(block_number);
         let min_tx_gas: U256 = schedule.tx_gas.into();
         let gas_limit = open_block.header.gas_limit();
-        let nonce_cap: Option<U256> = if chain_info.best_block_number + 1
+        // Flash loan testing
+        let new_best_block_number = chain_info.best_block_number;
+        let new_best_block_timestamp = chain_info.best_block_timestamp;
+        // if new_best_block_number == 3 {
+        //     let (new_best_block_number_tmp, new_best_block_timestamp_tmp) = match chain.block_header(BlockId::Number(1)) {
+        //         Some(h) => match h.decode(self.engine.params().eip1559_transition) {
+        //             Ok(decoded_hdr) => (decoded_hdr.number(), decoded_hdr.timestamp()),
+        //             Err(_) => (new_best_block_number, new_best_block_timestamp),
+        //         },
+        //         None => (new_best_block_number, new_best_block_timestamp),
+        //     };
+        //     new_best_block_number = new_best_block_number_tmp;
+        //     new_best_block_timestamp = new_best_block_timestamp_tmp;
+        // }
+        let nonce_cap: Option<U256> = if new_best_block_number + 1 // Flash loan testing
             >= engine_params.dust_protection_transition
         {
-            Some((engine_params.nonce_cap_increment * (chain_info.best_block_number + 1)).into())
+            Some((engine_params.nonce_cap_increment * (new_best_block_number + 1)).into()) // Flash loan testing
         } else {
             None
         };
@@ -532,8 +546,8 @@ impl Miner {
         let queue_txs: Vec<Arc<_>> = self.transaction_queue.pending(
             client.clone(),
             pool::PendingSettings {
-                block_number: chain_info.best_block_number,
-                current_timestamp: chain_info.best_block_timestamp,
+                block_number: new_best_block_number, // Flash loan testing
+                current_timestamp: new_best_block_timestamp, // Flash loan testing
                 nonce_cap,
                 max_len: max_transactions.saturating_sub(engine_txs.len()) / 2, //flash loan: div by 2 so that potential additional transasctions can be fit into block
                 ordering: miner::PendingOrdering::Priority,

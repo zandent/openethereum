@@ -431,10 +431,10 @@ impl Engine<EthereumMachine> for Arc<Ethash> {
         // Check difficulty is correct given the two timestamps.
         let expected_difficulty = self.calculate_difficulty(header, parent);
         if header.difficulty() != &expected_difficulty {
-            return Err(From::from(BlockError::InvalidDifficulty(Mismatch {
-                expected: expected_difficulty,
-                found: header.difficulty().clone(),
-            })));
+            // return Err(From::from(BlockError::InvalidDifficulty(Mismatch {
+            //     expected: expected_difficulty,
+            //     found: header.difficulty().clone(),
+            // })));
         }
 
         Ok(())

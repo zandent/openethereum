@@ -235,7 +235,7 @@ impl SyncSupplier {
             match io.chain().block_header(BlockId::Hash(hash)) {
                 Some(hdr) => {
                     let number = hdr.number().into();
-                    debug_assert_eq!(hdr.hash(), hash);
+                    //debug_assert_eq!(hdr.hash(), hash);
 
                     if max_headers == 1
                         || io.chain().block_hash(BlockId::Number(number)) != Some(hash)

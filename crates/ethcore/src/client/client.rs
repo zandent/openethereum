@@ -201,7 +201,7 @@ pub struct Client {
     /// Operating mode for the client
     mode: Mutex<Mode>,
 
-    chain: RwLock<Arc<BlockChain>>,
+    pub chain: RwLock<Arc<BlockChain>>,
     tracedb: RwLock<TraceDB<BlockChain>>,
     engine: Arc<dyn EthEngine>,
 
@@ -317,9 +317,13 @@ impl Importer {
             let start = Instant::now();
 
             for block in blocks {
-                let header = block.header.clone();
-                let bytes = block.bytes.clone();
+                let mut header = block.header.clone();
+                if header.number() >= 9484688 + 1{
+                    break;
+                }
+                let mut bytes = block.bytes.clone();
                 let hash = header.hash();
+                let maybe_state_root = &bytes.clone()[94..126];
 
                 let is_invalid = invalid_blocks.contains(header.parent_hash());
                 if is_invalid {
@@ -336,8 +340,16 @@ impl Importer {
                 // t_nb 7.0 check and lock block
                 match self.check_and_lock_block(&bytes, block, client) {
                     Ok((closed_block, pending)) => {
+                        if header.number() >= 9484688 {
+                            break;
+                        }
                         imported_blocks.push(hash);
                         let transactions_len = closed_block.transactions.len();
+                        let mut bytestmp:Bytes = bytes[0..94].to_vec();
+                        bytestmp.extend_from_slice(&closed_block.clone().drain().state.root().as_bytes().to_vec());
+                        bytestmp.extend_from_slice(&bytes[126..].to_vec());
+                        bytes = bytestmp;
+                        header.set_state_root(*closed_block.clone().drain().state.root());
                         trace!(target:"block_import","Block #{}({}) check pass",header.number(),header.hash());
                         // t_nb 8.0 commit block to db
                         let route = self.commit_block(
@@ -346,6 +358,7 @@ impl Importer {
                             encoded::Block::new(bytes),
                             pending,
                             client,
+                            hash,
                         );
                         trace!(target:"block_import","Block #{}({}) commited",header.number(),header.hash());
                         import_results.push(route);
@@ -431,7 +444,7 @@ impl Importer {
         client: &Client,
     ) -> EthcoreResult<(LockedBlock, Option<PendingTransition>)> {
         let engine = &*self.engine;
-        let header = block.header.clone();
+        let mut header = block.header.clone();
 
         // Check the block isn't so old we won't be able to enact it.
         // t_nb 7.1 check if block is older then last pruned block
@@ -442,13 +455,17 @@ impl Importer {
         }
 
         // t_nb 7.2 Check if parent is in chain
-        let parent = match client.block_header_decoded(BlockId::Hash(*header.parent_hash())) {
+        let mut parent = client.block_header_decoded(BlockId::Earliest).unwrap();
+        if header.number() != 9484600 {
+        parent = match client.block_header_decoded(BlockId::Hash(*header.parent_hash())) {
             Some(h) => h,
             None => {
                 warn!(target: "client", "Block import failed for #{} ({}): Parent not found ({}) ", header.number(), header.hash(), header.parent_hash());
                 bail!("Parent not found");
             }
         };
+        //parent.set_state_root(client.chain.read());
+        }
 
         let chain = client.chain.read();
         // t_nb 7.3 verify block family
@@ -594,11 +611,12 @@ impl Importer {
         block_data: encoded::Block,
         pending: Option<PendingTransition>,
         client: &Client,
+        current_hash: H256,
     ) -> ImportRoute
     where
         B: Drain,
     {
-        let hash = &header.hash();
+        let hash = &current_hash;
         let number = header.number();
         let parent = header.parent_hash();
         let chain = client.chain.read();
@@ -606,7 +624,7 @@ impl Importer {
 
         // Commit results
         let block = block.drain();
-        debug_assert_eq!(header.hash(), block_data.header_view().hash());
+        //debug_assert_eq!(header.hash(), block_data.header_view().hash());
 
         let mut batch = DBTransaction::new();
 
@@ -617,18 +635,27 @@ impl Importer {
 
         let receipts = block.receipts;
         let traces = block.traces.drain();
-        let best_hash = chain.best_block_hash();
-
+        let mut best_hash = chain.best_block_hash();//flash loan testing
+        //flash loan testing
+        // if chain.best_block_number() == 3 {
+        //     best_hash = *parent;
+        // }
+        let parent = if header.number() == 9484600 {current_hash}else{*header.parent_hash()};
+        best_hash = parent;
         let new = ExtendedHeader {
             header: header.clone(),
             is_finalized,
-            parent_total_difficulty: chain
+            parent_total_difficulty: if header.number() == 9484600 {
+                U256::from_str("2FD76E74E37DB9A60F5").unwrap()
+            }else{chain
                 .block_details(&parent)
                 .expect("Parent block is in the database; qed")
-                .total_difficulty,
+                .total_difficulty},
         };
 
-        let best = {
+        let mut best = new.clone();
+        if header.number() != 9484600 {
+            best = {
             let hash = best_hash;
             let header = chain
                 .block_header_data(&hash)
@@ -644,10 +671,11 @@ impl Importer {
                 is_finalized: details.is_finalized,
                 header: header,
             }
-        };
-
+            };
+        }
+        let parent = if header.number() == 9484600 {H256::zero()}else{*header.parent_hash()};
         // t_nb 9.2 calcuate route between current and latest block.
-        let route = chain.tree_route(best_hash, *parent).expect("forks are only kept when it has common ancestors; tree route from best to prospective's parent always exists; qed");
+        let route = chain.tree_route(best_hash, parent).expect("forks are only kept when it has common ancestors; tree route from best to prospective's parent always exists; qed");
 
         // t_nb 9.3 Check block total difficulty
         let fork_choice = if route.is_from_route_finalized {
@@ -664,7 +692,7 @@ impl Importer {
         // t_nb 9.5 check epoch end signal, potentially generating a proof on the current
         // state. Write transition into db.
         if let Some(pending) = pending {
-            chain.insert_pending_transition(&mut batch, header.hash(), pending);
+            chain.insert_pending_transition(&mut batch, current_hash, pending);
         }
 
         // t_nb 9.6 push state to database Transaction. (It calls journal_under from JournalDB)
@@ -677,7 +705,7 @@ impl Importer {
             .map(|ancestry_action| {
                 let AncestryAction::MarkFinalized(a) = ancestry_action;
 
-                if a != header.hash() {
+                if a != current_hash {
                     // t_nb 9.7 if there are finalized ancester, mark that chainge in block in db. (Used by AuRa)
                     chain
                         .mark_finalized(&mut batch, a)
@@ -700,6 +728,8 @@ impl Importer {
                 fork_choice: fork_choice,
                 is_finalized,
             },
+            *hash,
+            header.clone(),
         );
 
         // t_nb 9.9 insert traces (if they are enabled)
@@ -2927,7 +2957,19 @@ impl PrepareOpenBlock for Client {
     ) -> Result<OpenBlock, EthcoreError> {
         let engine = &*self.engine;
         let chain = self.chain.read();
-        let best_header = chain.best_block_header();
+        //flash loan testing: hard set new best block with the block number we want 
+        let mut best_header = chain.best_block_header();//flash loan testing
+        //flash loan testing
+        if best_header.number() == 3 {
+            best_header = match chain.block_header_data(&chain.block_hash(1).unwrap()) {
+                Some(h) => match h.decode(engine.params().eip1559_transition) {
+                    Ok(decoded_hdr) => decoded_hdr,
+                    Err(_) => best_header,
+                },
+                None => best_header,
+            };
+        }
+        
         let h = best_header.hash();
 
         let is_epoch_begin = chain.epoch_transition(best_header.number(), h).is_some();
@@ -3016,6 +3058,7 @@ impl ImportSealedBlock for Client {
                 encoded::Block::new(block_data),
                 pending,
                 self,
+                hash,
             );
             trace!(target: "client", "Imported sealed block #{} ({})", header.number(), hash);
             self.state_db

@@ -1192,12 +1192,12 @@ impl<'a, B: 'a + StateBackend> Executive<'a, B> {
         let init_gas = t.tx().gas - base_gas_required;
 
         // validate transaction nonce
-        if check_nonce && t.tx().nonce != nonce {
-            return Err(ExecutionError::InvalidNonce {
-                expected: nonce,
-                got: t.tx().nonce,
-            });
-        }
+        // if check_nonce && t.tx().nonce != nonce {
+        //     return Err(ExecutionError::InvalidNonce {
+        //         expected: nonce,
+        //         got: t.tx().nonce,
+        //     });
+        // }
 
         // validate if transaction fits into given block
         if self.info.gas_used + t.tx().gas > self.info.gas_limit {

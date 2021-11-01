@@ -374,11 +374,11 @@ impl AdversaryAccount {
         for (addr, result) in self.flash_loan_information.borrow_mut().iter(){
             match result.identity {
                 PotentialIdentity::Beneficiary(val) => {
-                    println!("Address {:?} gains {:?} in 0.0001 USD unit", *addr, val);
+                    //println!("Address {:?} gains {:?} in 0.0001 USD unit", *addr, val);
                     beneficiary.push(*addr);
                 },
                 PotentialIdentity::Victim(val) => {
-                    println!("Address {:?} loses {:?} in 0.0001 USD unit", *addr, val);
+                    //println!("Address {:?} loses {:?} in 0.0001 USD unit", *addr, val);
                     victim.push(*addr);
                 }
                 _ => (),

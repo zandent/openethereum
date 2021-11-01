@@ -418,7 +418,7 @@ impl<B: Backend> State<B> {
         my_nonce: U256,
         deployed_tx: Option<UnverifiedTransaction>,
     ) -> Option<usize> {
-        println!("init adversary account entry for address: {:?}", addr);
+        //println!("init adversary account entry for address: {:?}", addr);
         //set current addr for current transaction
         *self.current_flash_loan_sender_address.get_mut() = addr;
         let (unverify_tx, _, _) = tx.clone().deconstruct();
@@ -470,7 +470,7 @@ impl<B: Backend> State<B> {
 
     /// update adversary account
     pub fn rm_adversary_account_entry(&mut self, addr: Address, tx: SignedTransaction) {
-        println!("remove adversary account entry for address: {:?}", addr);
+        //println!("remove adversary account entry for address: {:?}", addr);
         let (unverify_tx, _, _) = tx.clone().deconstruct();
         let hash = unverify_tx.clone().hash();
         let tmp_pool = self.global_flash_loan_transaction_pool.borrow_mut();
@@ -550,7 +550,7 @@ impl<B: Backend> State<B> {
     }
     /// Set address if it is deployed transaction
     pub fn set_old_tx_contract_address (&self, sender: Address, new_contract_addr: Address) -> bool{
-        println!("Contract {:?} is being deployed", new_contract_addr);
+        //println!("Contract {:?} is being deployed", new_contract_addr);
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
             Some(val) => {
                 val.last().unwrap().1.set_old_tx_contract_address(new_contract_addr)
@@ -1125,7 +1125,7 @@ impl<B: Backend> State<B> {
         V: trace::VMTracer,
     {
         let options = TransactOptions::new(tracer, vm_tracer);
-        let e = self.execute(env_info, machine, t, options, false)?;
+        let e = self.execute(env_info, machine, t, options, true)?;
         let params = machine.params();
 
         let eip658 = env_info.number >= params.eip658_transition;

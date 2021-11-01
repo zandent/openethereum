@@ -282,9 +282,14 @@ impl BlockProvider for BlockChain {
     /// Returns true if the given block is known
     /// (though not necessarily a part of the canon chain).
     fn is_known(&self, hash: &H256) -> bool {
+        use std::str::FromStr;
+        if *hash == H256::from_str("cd11b855665fc4426798e744f3e2304f93b0e17779793032dfe73da3347eb809").unwrap() {
+            true
+        }else{
         self.db
             .key_value()
             .exists_with_cache(db::COL_EXTRA, &self.block_details, hash)
+        }
     }
 
     fn first_block(&self) -> Option<H256> {
@@ -860,6 +865,15 @@ impl BlockChain {
     /// route contains a finalized block. This only holds if the two parts (from
     /// and to) are on different branches, ie. on 2 different forks.
     pub fn tree_route(&self, from: H256, to: H256) -> Option<TreeRoute> {
+        use std::str::FromStr;
+        if from == H256::from_str("59d2f3abac2109e64c40dd041a8bc2dbb502da9385d88d181a0358c6d686b752").unwrap() {
+            Some(TreeRoute {
+                blocks: [from].to_vec(),
+                ancestor: to,
+                index: 1,
+                is_from_route_finalized: false,
+            })
+        }else{
         let mut from_branch = vec![];
         let mut is_from_route_finalized = false;
         let mut to_branch = vec![];
@@ -907,6 +921,7 @@ impl BlockChain {
             index: index,
             is_from_route_finalized: is_from_route_finalized,
         })
+        }
     }
 
     /// Inserts a verified, known block from the canonical chain.
@@ -976,6 +991,7 @@ impl BlockChain {
                     block,
                 },
                 is_best,
+                None,
             );
 
             if is_ancient {
@@ -1023,6 +1039,7 @@ impl BlockChain {
                     block,
                 },
                 is_best,
+                None,
             );
             true
         }
@@ -1294,13 +1311,21 @@ impl BlockChain {
         block: encoded::Block,
         receipts: Vec<TypedReceipt>,
         extras: ExtrasInsert,
+        current_hash: H256,
+        current_header: Header,
     ) -> ImportRoute {
         let parent_hash = block.header_view().parent_hash();
-        let best_hash = self.best_block_hash();
-
+        let mut best_hash = self.best_block_hash();//flash loan testing
+        //flash loan testing
+        // if self.best_block_number() == 3 {
+        //     best_hash = parent_hash;
+        // }
+        if self.best_block_number() != 0 {
+            best_hash = parent_hash;
+        }
         let route = self.tree_route(best_hash, parent_hash).expect("forks are only kept when it has common ancestors; tree route from best to prospective's parent always exists; qed");
 
-        self.insert_block_with_route(batch, block, receipts, route, extras)
+        self.insert_block_with_route(batch, block, receipts, route, extras, current_hash, current_header)
     }
 
     /// Inserts the block into backing cache database with already generated route information.
@@ -1313,8 +1338,10 @@ impl BlockChain {
         receipts: Vec<TypedReceipt>,
         route: TreeRoute,
         extras: ExtrasInsert,
+        current_hash: H256,
+        current_header: Header,
     ) -> ImportRoute {
-        let hash = block.header_view().hash();
+        let hash = current_hash;
         let parent_hash = block.header_view().parent_hash();
 
         if self.is_known_child(&parent_hash, &hash) {
@@ -1330,7 +1357,7 @@ impl BlockChain {
         batch.put(db::COL_HEADERS, hash.as_bytes(), &compressed_header);
         batch.put(db::COL_BODIES, hash.as_bytes(), &compressed_body);
 
-        let info = self.block_info(&block.header_view(), route, &extras);
+        let info = self.block_info(&block.header_view(), route, &extras, current_hash);
 
         if let BlockLocation::BranchBecomingCanonChain(ref d) = info.location {
             info!(target: "reorg", "Reorg to {} ({} {} {})",
@@ -1359,6 +1386,7 @@ impl BlockChain {
                 block,
             },
             true,
+            Some(current_header),
         );
 
         ImportRoute::from(info)
@@ -1370,10 +1398,50 @@ impl BlockChain {
         header: &HeaderView,
         route: TreeRoute,
         extras: &ExtrasInsert,
+        current_hash: H256,
     ) -> BlockInfo {
-        let hash = header.hash();
+        let hash = current_hash;
         let number = header.number();
         let parent_hash = header.parent_hash();
+        if number == 9484600 {
+            use std::str::FromStr;
+            BlockInfo {
+                hash: hash,
+                number: number,
+                total_difficulty: U256::from_str("2FD76EF1BD3A18B6280").unwrap(),
+                location: match extras.fork_choice {
+                    ForkChoice::New => {
+                        // On new best block we need to make sure that all ancestors
+                        // are moved to "canon chain"
+                        // find the route between old best block and the new one
+                        match route.blocks.len() {
+                            0 => BlockLocation::CanonChain,
+                            _ => {
+                                let retracted = route
+                                    .blocks
+                                    .iter()
+                                    .take(route.index)
+                                    .cloned()
+                                    .collect::<Vec<_>>()
+                                    .into_iter()
+                                    .collect::<Vec<_>>();
+                                let enacted = route
+                                    .blocks
+                                    .into_iter()
+                                    .skip(route.index)
+                                    .collect::<Vec<_>>();
+                                BlockLocation::BranchBecomingCanonChain(BranchBecomingCanonChainData {
+                                    ancestor: route.ancestor,
+                                    enacted: enacted,
+                                    retracted: retracted,
+                                })
+                            }
+                        }
+                    }
+                    ForkChoice::Old => BlockLocation::Branch,
+                },
+            }   
+        }else{
         let parent_details = self
             .block_details(&parent_hash)
             .unwrap_or_else(|| panic!("Invalid parent hash: {:?}", parent_hash));
@@ -1414,6 +1482,7 @@ impl BlockChain {
                 ForkChoice::Old => BlockLocation::Branch,
             },
         }
+        }
     }
 
     /// Mark a block to be considered finalized. Returns `Some(())` if the operation succeeds, and `None` if the block
@@ -1447,7 +1516,7 @@ impl BlockChain {
     }
 
     /// Prepares extras update.
-    fn prepare_update(&self, batch: &mut DBTransaction, update: ExtrasUpdate, is_best: bool) {
+    fn prepare_update(&self, batch: &mut DBTransaction, update: ExtrasUpdate, is_best: bool, current_header: Option<Header>,) {
         {
             let mut write_receipts = self.block_receipts.write();
             batch.extend_with_cache(
@@ -1473,7 +1542,7 @@ impl BlockChain {
                 batch.put(db::COL_EXTRA, b"best", update.info.hash.as_bytes());
                 *best_block = Some(BestBlock {
                     total_difficulty: update.info.total_difficulty,
-                    header: update.block.decode_header(self.eip1559_transition),
+                    header: if let Some(h) = current_header {h}else{update.block.decode_header(self.eip1559_transition)},
                     block: update.block,
                 });
             }
@@ -1662,6 +1731,21 @@ impl BlockChain {
         is_finalized: bool,
     ) -> HashMap<H256, BlockDetails> {
         // update parent
+        if info.number == 9484600 {
+            // create current block details.
+            let details = BlockDetails {
+                number: info.number,
+                total_difficulty: info.total_difficulty,
+                parent: parent_hash,
+                children: vec![],
+                is_finalized: is_finalized,
+            };
+
+            // write to batch
+            let mut block_details = HashMap::new();
+            block_details.insert(info.hash, details);
+            block_details
+        }else{
         let mut parent_details = self
             .uncommitted_block_details(&parent_hash)
             .unwrap_or_else(|| panic!("Invalid parent hash: {:?}", parent_hash));
@@ -1681,6 +1765,7 @@ impl BlockChain {
         block_details.insert(parent_hash, parent_details);
         block_details.insert(info.hash, details);
         block_details
+        }
     }
 
     /// This function returns modified block receipts.

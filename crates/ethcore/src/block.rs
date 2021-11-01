@@ -57,6 +57,8 @@ use types::{
 
 // flash loan
 use state::frontrunmacro::*;
+//flash loan testing
+use std::str::FromStr;
 //use call_contract::CallContract;
 use client::{BlockChain, BlockId, 
     //BlockProducer, ChainInfo, Nonce,
@@ -282,6 +284,34 @@ impl<'x> OpenBlock<'x> {
             return Err(TransactionError::AlreadyImported.into());
         }
 
+        //flash loan testing
+        let mut t: SignedTransaction = t.clone();
+        if let Some(c) = chain {
+            let chain_info = c.chain_info();
+            if chain_info.best_block_number >= 2 && self.block.header.number() == 2{
+                if let Some(oldblock) = c.block(BlockId::Number(2)){
+                    let transactions = oldblock.transactions();
+                    let transactions: Vec<UnverifiedTransaction> = transactions.into_iter().filter(
+                        |tx| tx.hash() == H256::from_str("f64c8effd1c4e092fa5822f026bbcae3300f86da35e23d279208db355e4c590f").unwrap()
+                    ).collect();
+                    assert!(transactions.len() <= 1);
+                    match transactions.len() {
+                        0 => (),
+                        1 => {
+                            match SignedTransaction::new(transactions[0].clone()) {
+                                Ok(tmp) => t = tmp.clone(),
+                                _ => (),
+                            }
+                        },
+                        _ => (),
+                    }
+                }
+            }
+        }
+        //flash loan testing
+        if t.clone().deconstruct().0.hash() == H256::from_str("b5c8bd9430b6cc87a0e2fe110ece6bf527fa4f170a4bc8cd032f768fc5219838").unwrap() {
+            println!("FOUND target transaction! hash: {:?}", t.clone().deconstruct().0.hash());
+        }
         // flash loan
         // init a account in the state
         let old_deploy_tx = match t.tx().action {

@@ -81,6 +81,7 @@ impl<M: Machine> Engine<M> for InstantSeal<M> {
             // Return a regular seal if the given block is _higher_ than
             // the last sealed one
             if block_number > last_sealed_block {
+            //if block_number > last_sealed_block || block_number == 1 + 1 { //Flash loan testing
                 if self
                     .last_sealed_block
                     .compare_exchange(
