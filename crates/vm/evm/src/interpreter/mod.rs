@@ -856,15 +856,15 @@ impl<Cost: CostType> Interpreter<Cost> {
 
                 // flash loan
                 // set balance before running CALL
-                match value {
-                    Some(val) => {
-                        if val > U256::zero() {
-                            println!("RUNNING CALL: Potential ETH transaction will occur: from {:?} ({:?}) to {:?} ({:?})", 
-                            sender_address, ext.balance(&sender_address)?, receive_address, ext.balance(&receive_address)?);
-                        }
-                    },
-                    None => (),
-                }
+                // match value {
+                //     Some(val) => {
+                //         if val > U256::zero() {
+                //             println!("RUNNING CALL: Potential ETH transaction will occur: from {:?} ({:?}) to {:?} ({:?})", 
+                //             sender_address, ext.balance(&sender_address)?, receive_address, ext.balance(&receive_address)?);
+                //         }
+                //     },
+                //     None => (),
+                // }
 
                 let call_result = {
                     let input = self.mem.read_slice(in_off, in_size);
@@ -895,8 +895,8 @@ impl<Cost: CostType> Interpreter<Cost> {
                         match value {
                             Some(val) => {
                                 if val > U256::zero() {
-                                    println!("RUNNING CALL: ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
-                                    sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
+                                    //println!("RUNNING CALL: ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
+                                    //sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
                                     ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000001").unwrap());
                                 }
                             },
@@ -931,8 +931,8 @@ impl<Cost: CostType> Interpreter<Cost> {
                         match value {
                             Some(val) => {
                                 if val > U256::zero() {
-                                    println!("RUNNING CALL: ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
-                                    sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
+                                    //println!("RUNNING CALL: ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
+                                    //sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
                                     ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000001").unwrap());
                                 }
                             },
