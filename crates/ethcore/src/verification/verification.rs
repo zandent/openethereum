@@ -203,104 +203,104 @@ fn verify_uncles(
     let header = &block.header;
     let num_uncles = block.uncles.len();
     let max_uncles = engine.maximum_uncle_count(header.number());
-    if num_uncles != 0 {
-        if num_uncles > max_uncles {
-            return Err(From::from(BlockError::TooManyUncles(OutOfBounds {
-                min: None,
-                max: Some(max_uncles),
-                found: num_uncles,
-            })));
-        }
+    // if num_uncles != 0 {
+    //     if num_uncles > max_uncles {
+    //         return Err(From::from(BlockError::TooManyUncles(OutOfBounds {
+    //             min: None,
+    //             max: Some(max_uncles),
+    //             found: num_uncles,
+    //         })));
+    //     }
 
-        let mut excluded = HashSet::new();
-        excluded.insert(header.hash());
-        let mut hash = header.parent_hash().clone();
-        excluded.insert(hash.clone());
-        for _ in 0..MAX_UNCLE_AGE {
-            match bc.block_details(&hash) {
-                Some(details) => {
-                    excluded.insert(details.parent);
-                    let b = bc
-                        .block(&hash)
-                        .expect("parent already known to be stored; qed");
-                    excluded.extend(b.uncle_hashes());
-                    hash = details.parent;
-                }
-                None => break,
-            }
-        }
+    //     let mut excluded = HashSet::new();
+    //     excluded.insert(header.hash());
+    //     let mut hash = header.parent_hash().clone();
+    //     excluded.insert(hash.clone());
+    //     for _ in 0..MAX_UNCLE_AGE {
+    //         match bc.block_details(&hash) {
+    //             Some(details) => {
+    //                 excluded.insert(details.parent);
+    //                 let b = bc
+    //                     .block(&hash)
+    //                     .expect("parent already known to be stored; qed");
+    //                 excluded.extend(b.uncle_hashes());
+    //                 hash = details.parent;
+    //             }
+    //             None => break,
+    //         }
+    //     }
 
-        let mut verified = HashSet::new();
-        for uncle in &block.uncles {
-            if excluded.contains(&uncle.hash()) {
-                return Err(From::from(BlockError::UncleInChain(uncle.hash())));
-            }
+    //     let mut verified = HashSet::new();
+    //     for uncle in &block.uncles {
+    //         if excluded.contains(&uncle.hash()) {
+    //             return Err(From::from(BlockError::UncleInChain(uncle.hash())));
+    //         }
 
-            if verified.contains(&uncle.hash()) {
-                return Err(From::from(BlockError::DuplicateUncle(uncle.hash())));
-            }
+    //         if verified.contains(&uncle.hash()) {
+    //             return Err(From::from(BlockError::DuplicateUncle(uncle.hash())));
+    //         }
 
-            // m_currentBlock.number() - uncle.number()		m_cB.n - uP.n()
-            // 1											2
-            // 2
-            // 3
-            // 4
-            // 5
-            // 6											7
-            //												(8 Invalid)
+    //         // m_currentBlock.number() - uncle.number()		m_cB.n - uP.n()
+    //         // 1											2
+    //         // 2
+    //         // 3
+    //         // 4
+    //         // 5
+    //         // 6											7
+    //         //												(8 Invalid)
 
-            let depth = if header.number() > uncle.number() {
-                header.number() - uncle.number()
-            } else {
-                0
-            };
-            if depth > MAX_UNCLE_AGE as u64 {
-                return Err(From::from(BlockError::UncleTooOld(OutOfBounds {
-                    min: Some(header.number() - depth),
-                    max: Some(header.number() - 1),
-                    found: uncle.number(),
-                })));
-            } else if depth < 1 {
-                return Err(From::from(BlockError::UncleIsBrother(OutOfBounds {
-                    min: Some(header.number() - depth),
-                    max: Some(header.number() - 1),
-                    found: uncle.number(),
-                })));
-            }
+    //         let depth = if header.number() > uncle.number() {
+    //             header.number() - uncle.number()
+    //         } else {
+    //             0
+    //         };
+    //         if depth > MAX_UNCLE_AGE as u64 {
+    //             return Err(From::from(BlockError::UncleTooOld(OutOfBounds {
+    //                 min: Some(header.number() - depth),
+    //                 max: Some(header.number() - 1),
+    //                 found: uncle.number(),
+    //             })));
+    //         } else if depth < 1 {
+    //             return Err(From::from(BlockError::UncleIsBrother(OutOfBounds {
+    //                 min: Some(header.number() - depth),
+    //                 max: Some(header.number() - 1),
+    //                 found: uncle.number(),
+    //             })));
+    //         }
 
-            // cB
-            // cB.p^1	    1 depth, valid uncle
-            // cB.p^2	---/  2
-            // cB.p^3	-----/  3
-            // cB.p^4	-------/  4
-            // cB.p^5	---------/  5
-            // cB.p^6	-----------/  6
-            // cB.p^7	-------------/
-            // cB.p^8
-            let mut expected_uncle_parent = header.parent_hash().clone();
-            let uncle_parent = bc.block_header_data(&uncle.parent_hash()).ok_or_else(|| {
-                Error::from(BlockError::UnknownUncleParent(uncle.parent_hash().clone()))
-            })?;
-            for _ in 0..depth {
-                match bc.block_details(&expected_uncle_parent) {
-                    Some(details) => {
-                        expected_uncle_parent = details.parent;
-                    }
-                    None => break,
-                }
-            }
-            if expected_uncle_parent != uncle_parent.hash() {
-                // return Err(From::from(BlockError::UncleParentNotInChain(
-                //     uncle_parent.hash(),
-                // )));
-            }
+    //         // cB
+    //         // cB.p^1	    1 depth, valid uncle
+    //         // cB.p^2	---/  2
+    //         // cB.p^3	-----/  3
+    //         // cB.p^4	-------/  4
+    //         // cB.p^5	---------/  5
+    //         // cB.p^6	-----------/  6
+    //         // cB.p^7	-------------/
+    //         // cB.p^8
+    //         let mut expected_uncle_parent = header.parent_hash().clone();
+    //         let uncle_parent = bc.block_header_data(&uncle.parent_hash()).ok_or_else(|| {
+    //             Error::from(BlockError::UnknownUncleParent(uncle.parent_hash().clone()))
+    //         })?;
+    //         for _ in 0..depth {
+    //             match bc.block_details(&expected_uncle_parent) {
+    //                 Some(details) => {
+    //                     expected_uncle_parent = details.parent;
+    //                 }
+    //                 None => break,
+    //             }
+    //         }
+    //         if expected_uncle_parent != uncle_parent.hash() {
+    //             // return Err(From::from(BlockError::UncleParentNotInChain(
+    //             //     uncle_parent.hash(),
+    //             // )));
+    //         }
 
-            let uncle_parent = uncle_parent.decode(engine.params().eip1559_transition)?;
-            verify_parent(&uncle, &uncle_parent, engine)?;
-            engine.verify_block_family(&uncle, &uncle_parent)?;
-            verified.insert(uncle.hash());
-        }
-    }
+    //         let uncle_parent = uncle_parent.decode(engine.params().eip1559_transition)?;
+    //         verify_parent(&uncle, &uncle_parent, engine)?;
+    //         engine.verify_block_family(&uncle, &uncle_parent)?;
+    //         verified.insert(uncle.hash());
+    //     }
+    // }
 
     Ok(())
 }
@@ -463,7 +463,7 @@ fn verify_parent(header: &Header, parent: &Header, engine: &dyn EthEngine) -> Re
         })));
     }
     if header.number() != parent.number() + 1
-    && header.number() != 9484600 && header.number() != 9484601{
+    && header.number() != 4719550 && header.number() != 4719550 + 1{
         return Err(From::from(BlockError::InvalidNumber(Mismatch {
             expected: parent.number() + 1,
             found: header.number(),

@@ -283,7 +283,7 @@ impl BlockProvider for BlockChain {
     /// (though not necessarily a part of the canon chain).
     fn is_known(&self, hash: &H256) -> bool {
         use std::str::FromStr;
-        if *hash == H256::from_str("cd11b855665fc4426798e744f3e2304f93b0e17779793032dfe73da3347eb809").unwrap() {
+        if *hash == H256::from_str("0b0ad1c9ee6ab2eeb9654884032a99bf5beee2b857d4954deb64a94b427c8d3c").unwrap() { //this is parent hash
             true
         }else{
         self.db
@@ -866,7 +866,7 @@ impl BlockChain {
     /// and to) are on different branches, ie. on 2 different forks.
     pub fn tree_route(&self, from: H256, to: H256) -> Option<TreeRoute> {
         use std::str::FromStr;
-        if from == H256::from_str("59d2f3abac2109e64c40dd041a8bc2dbb502da9385d88d181a0358c6d686b752").unwrap() {
+        if from == H256::from_str("47bab3bc72260c4774b9c4acb1f12c9c074f0fc95a978810f347fa4e2b3c2ebc").unwrap() {
             Some(TreeRoute {
                 blocks: [from].to_vec(),
                 ancestor: to,
@@ -1403,12 +1403,12 @@ impl BlockChain {
         let hash = current_hash;
         let number = header.number();
         let parent_hash = header.parent_hash();
-        if number == 9484600 {
+        if number == 4719550 {
             use std::str::FromStr;
             BlockInfo {
                 hash: hash,
                 number: number,
-                total_difficulty: U256::from_str("2FD76EF1BD3A18B6280").unwrap(),
+                total_difficulty: U256::from_str("5CE1D19D5BCBECEF02").unwrap(),
                 location: match extras.fork_choice {
                     ForkChoice::New => {
                         // On new best block we need to make sure that all ancestors
@@ -1731,7 +1731,7 @@ impl BlockChain {
         is_finalized: bool,
     ) -> HashMap<H256, BlockDetails> {
         // update parent
-        if info.number == 9484600 {
+        if info.number == 4719550 {
             // create current block details.
             let details = BlockDetails {
                 number: info.number,

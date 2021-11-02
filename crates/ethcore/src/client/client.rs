@@ -456,7 +456,7 @@ impl Importer {
 
         // t_nb 7.2 Check if parent is in chain
         let mut parent = client.block_header_decoded(BlockId::Earliest).unwrap();
-        if header.number() != 9484600 {
+        if header.number() != 4719550 {
         parent = match client.block_header_decoded(BlockId::Hash(*header.parent_hash())) {
             Some(h) => h,
             None => {
@@ -640,12 +640,12 @@ impl Importer {
         // if chain.best_block_number() == 3 {
         //     best_hash = *parent;
         // }
-        let parent = if header.number() == 9484600 {current_hash}else{*header.parent_hash()};
+        let parent = if header.number() == 4719550 {current_hash}else{*header.parent_hash()};
         best_hash = parent;
         let new = ExtendedHeader {
             header: header.clone(),
             is_finalized,
-            parent_total_difficulty: if header.number() == 9484600 {
+            parent_total_difficulty: if header.number() == 4719550 {
                 U256::from_str("2FD76E74E37DB9A60F5").unwrap()
             }else{chain
                 .block_details(&parent)
@@ -654,7 +654,7 @@ impl Importer {
         };
 
         let mut best = new.clone();
-        if header.number() != 9484600 {
+        if header.number() != 4719550 {
             best = {
             let hash = best_hash;
             let header = chain
@@ -673,7 +673,7 @@ impl Importer {
             }
             };
         }
-        let parent = if header.number() == 9484600 {H256::zero()}else{*header.parent_hash()};
+        let parent = if header.number() == 4719550 {H256::zero()}else{*header.parent_hash()};
         // t_nb 9.2 calcuate route between current and latest block.
         let route = chain.tree_route(best_hash, parent).expect("forks are only kept when it has common ancestors; tree route from best to prospective's parent always exists; qed");
 

@@ -319,7 +319,7 @@ impl Header {
     pub fn hash(&self) -> H256 {
         use std::str::FromStr;
         if self.number() == 0 {
-            H256::from_str("59d2f3abac2109e64c40dd041a8bc2dbb502da9385d88d181a0358c6d686b752").unwrap()
+            H256::from_str("47bab3bc72260c4774b9c4acb1f12c9c074f0fc95a978810f347fa4e2b3c2ebc").unwrap()
         }else{
             self.hash.unwrap_or_else(|| keccak(self.rlp(Seal::With)))
         }
