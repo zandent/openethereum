@@ -14,7 +14,6 @@ use std::{
     collections::{HashMap},
     sync::Arc,
 };
-use std::str::FromStr;
 pub use state::frontrunmacro::*;
 use executive::contract_address;
 use vm::CreateContractAddress;
@@ -239,12 +238,7 @@ impl AdversaryAccount {
                     for (a, b, c) in values.iter() {
                         match CONTRACT_ADDRESSES.iter().position(|val| *val == *a) {
                             Some(idx) => {
-                                let mut net_value = c.saturating_mul(TOKEN_USD_PRICES[idx]);
-                                //TODO: If it is ETH, divide into eth. Should find a smart way to do it
-                                if CONTRACT_ADDRESSES[idx] == Address::from_str("0000000000000000000000000000000000000001").unwrap() {
-                                    net_value = net_value.checked_div(U256::from_dec_str("1000000000000000000").unwrap()).unwrap();
-                                }
-
+                                let net_value = c.saturating_mul(TOKEN_USD_PRICES[idx]).checked_div(TOKEN_DECIMAL_POINTS[idx]).unwrap();
                                 if earn_flag {
                                     if *b {
                                         earn_flag = true;
@@ -350,7 +344,7 @@ impl AdversaryAccount {
             }
             match FLASH_LOAN_CONTRACT_ADDRESSES.iter().position(|val| *val == *to) {
                 Some(_) => {
-                    if let Some(_) = flash_loan_start.iter().position(|i| i.0==*to && i.2==*amt && i.3==*token){
+                    if let Some(_) = flash_loan_start.iter().position(|i| i.0==*to && i.2<=*amt && i.3==*token){
                         flash_loan_end.push((*from, *to, *amt, *token));
                     }
                 },
@@ -390,9 +384,6 @@ impl AdversaryAccount {
         //Find some address get amt from flash loan contract address
         //TODO: generally the flash loan receiver is the beneficiary by the end of the transaction. Need to think about corner case
         if let Some((start, _)) = self.find_flash_loan_end_positions() {
-            if !start.iter().all(|val| beneficiary.contains(&val.1)) {
-                return false;
-            }
             //DEBUGGING: print all loan receiver
             for (a, b, c, d) in start.iter() {
                 println!("Flash Loan Address {:?} sends {:?} of token address {:?} to Address {:?}", *a, *c, *d, *b);
@@ -405,6 +396,8 @@ impl AdversaryAccount {
         if !(beneficiary.contains(&self.old_tx.sender()) ||  beneficiary.contains(&self.old_tx_contract_address.borrow().unwrap())) {
             return false;
         }
+        //flash loan testing
+        //return false;
         if assemable_new {
             self.assemable_new_transactions();
         }

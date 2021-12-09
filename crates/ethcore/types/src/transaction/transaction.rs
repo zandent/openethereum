@@ -940,6 +940,12 @@ impl SignedTransaction {
         })
     }
 
+    //flash loan testing full node
+    /// Modify transaction sender.
+    // pub fn set_sender(&mut self, new_sender: Address) {
+    //     self.sender = new_sender;
+    // }
+
     /// Returns transaction sender.
     pub fn sender(&self) -> Address {
         self.sender

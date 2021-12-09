@@ -320,7 +320,10 @@ impl Importer {
                 let header = block.header.clone();
                 let bytes = block.bytes.clone();
                 let hash = header.hash();
-
+                //flash loan testing
+                // if header.number() >= 11490242{
+                //     break;
+                // }
                 let is_invalid = invalid_blocks.contains(header.parent_hash());
                 if is_invalid {
                     debug!(

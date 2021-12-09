@@ -543,7 +543,8 @@ impl Miner {
                     .unwrap_or_default(),
             },
         );
-
+        //flash loan testing
+        //let queue_txs: Vec<Arc<_>> = self.transaction_queue.all_transactions();
         let took_ms = |elapsed: &Duration| {
             elapsed.as_secs() * 1000 + elapsed.subsec_nanos() as u64 / 1_000_000
         };
@@ -974,6 +975,8 @@ impl Miner {
             let mut sealing = self.sealing.lock();
             let have_work = sealing.queue.peek_last_ref().is_some();
             trace!(target: "miner", "prepare_pending_block: have_work={}", have_work);
+            //flash loan testing
+            //let have_work = false;
             if !have_work {
                 sealing.enabled = true;
                 true
@@ -996,6 +999,9 @@ impl Miner {
                 Some((block, original_work_hash)) => {
                     self.prepare_work(block, original_work_hash);
                     BlockPreparationStatus::Succeeded
+                    //flash loan testing
+                    //comment above and use notprepared one
+                    //BlockPreparationStatus::NotPrepared
                 }
                 None => BlockPreparationStatus::Failed,
             }

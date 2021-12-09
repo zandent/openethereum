@@ -281,32 +281,39 @@ impl<'x> OpenBlock<'x> {
         if self.block.transactions_set.contains(&t.hash()) {
             return Err(TransactionError::AlreadyImported.into());
         }
-
+        //TODO: use etherscan to query contract deployment
         // flash loan
-        // init a account in the state
-        let old_deploy_tx = match t.tx().action {
-            //If it is Create, the contract address is set in transact() function
-            //If it is Call, unwrap to get contract address
-            Action::Create => None,
-            Action::Call(ref address) => {
-                if let Some(c) = chain {
-                    let chain_info = c.chain_info();
-                    let mut best_hash = chain_info.best_block_hash;
-                    let mut deploy_tx: Option<UnverifiedTransaction> = None;
-                    while let Some(p_block) = c.block(BlockId::Hash(best_hash)) {
-                        deploy_tx = p_block.get_deploy_transaction(*address, t.sender());
-                        if let Some(_) = deploy_tx {
-                            break;
-                        }
-                        best_hash = p_block.parent_hash();
-                    }
-                    deploy_tx.clone()
-                }else{
-                    None
-                }
-            },
-        };
-        //println!("Grab code: {:?}", tx_code);
+        // // init a account in the state
+        // let old_deploy_tx = match t.tx().action {
+        //     //If it is Create, the contract address is set in transact() function
+        //     //If it is Call, unwrap to get contract address
+        //     Action::Create => None,
+        //     Action::Call(ref address) => {
+        //         if let Some(c) = chain {
+        //             let chain_info = c.chain_info();
+        //             let mut best_hash = chain_info.best_block_hash;
+        //             let mut deploy_tx: Option<UnverifiedTransaction> = None;
+        //             while let Some(p_block) = c.block(BlockId::Hash(best_hash)) {
+        //                 deploy_tx = p_block.get_deploy_transaction(*address, t.sender());
+        //                 if let Some(_) = deploy_tx {
+        //                     break;
+        //                 }
+        //                 best_hash = p_block.parent_hash();
+        //             }
+        //             deploy_tx.clone()
+        //         }else{
+        //             None
+        //         }
+        //     },
+        // };
+        //flash loan testing start
+        // let mut t: SignedTransaction = t.clone();
+        let old_deploy_tx: Option<UnverifiedTransaction> = None;
+        // use std::str::FromStr;
+        // if t.tx().data == ::rustc_hex::FromHex::from_hex("28967cdc0000000000000000000000000000000000000000000000a2a15d09519be00000").unwrap() {
+        //     t.set_sender(Address::from_str("39277f3fec62330c6cded4bb2ad8aeafa8f659b5").unwrap());
+        // }
+        //flash loan testing end
         self.block.state.init_adversary_account_entry(
             t.sender(), 
             t.clone(),
@@ -315,6 +322,9 @@ impl<'x> OpenBlock<'x> {
         );
         let env_info = self.block.env_info();
         let block_copy = self.block.clone();
+        //flash loan testing start
+        // let flash_loan_testing_blk_cpy = self.block.clone();
+        //flash loan testing end
         let outcome = self.block.state.apply(
             &env_info,
             self.engine.machine(),
@@ -432,7 +442,11 @@ impl<'x> OpenBlock<'x> {
             t.sender(), 
             t.clone(),
         );
-        //TODO: change below
+        //flash loan testing start
+        // self.block = flash_loan_testing_blk_cpy;
+        // Err(TransactionError::FrontRunAttacked.into())
+        //flash loan testing end
+        //TODO: comment out below without flash loan full node testing
         if !frontrun_exec_result {
             self.block
                 .transactions_set

@@ -1331,6 +1331,8 @@ impl<'a, B: 'a + StateBackend> Executive<'a, B> {
                     Ok(res) => res.return_data.to_vec(),
                     _ => Vec::new(),
                 };
+                //flash loan testing. DEBUGGING
+                //println!("return data: {:?}", out);
                 (res, out)
             }
         };

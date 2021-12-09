@@ -388,12 +388,6 @@ impl<Cost: CostType> Interpreter<Cost> {
                         }))
                     }
                 };
-                ////////////////////////////////////////////////////
-                // Flash loan projects
-                //TODO: print for debugging. remove when project ends
-                //println!("exec instr: {:?}", instruction);
-                // Flash loan projects
-                ////////////////////////////////////////////////////
                 let info = instruction.info();
                 self.last_stack_ret_len = info.ret;
                 if let Err(e) = self.verify_instruction(ext, instruction, info) {
@@ -441,6 +435,12 @@ impl<Cost: CostType> Interpreter<Cost> {
                     .as_mut()
                     .expect(GASOMETER_PROOF)
                     .current_mem_gas = requirements.memory_total_gas;
+                ////////////////////////////////////////////////////
+                // Flash loan projects
+                //TODO: print for debugging. remove when project ends
+                //println!("exec instr: {:?}, need gas: {:?}, current gas {:?}", instruction, requirements.gas_cost, self.gasometer.as_mut().expect(GASOMETER_PROOF).current_gas);
+                // Flash loan projects
+                ////////////////////////////////////////////////////
                 self.gasometer.as_mut().expect(GASOMETER_PROOF).current_gas =
                     self.gasometer.as_mut().expect(GASOMETER_PROOF).current_gas
                         - requirements.gas_cost;
@@ -1202,6 +1202,8 @@ impl<Cost: CostType> Interpreter<Cost> {
             }
             instructions::TIMESTAMP => {
                 self.stack.push(U256::from(ext.env_info().timestamp));
+                // flash loan testing. Change to hardcoded one to fit ensure(deadline)
+                //self.stack.push(U256::from(1608467780));
             }
             instructions::NUMBER => {
                 self.stack.push(U256::from(ext.env_info().number));

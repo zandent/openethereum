@@ -126,11 +126,19 @@ where
         self.state.set_token_flow_in_current_transaction(sender, addrfrom, addrto, amt, token_addr)
     }
     fn set_balance_by_log(&self, sender: Address, data: Vec<H256>, bal: &[u8], token_addr: Address) -> Option<U256> {
-        //data[0]: hash
-        //data[1]: addressfrom
-        //data[2]: addressto
         if data.len() == 3 && data[0] == *TRANSFER_EVENT_HASH {
+            //data[0]: hash
+            //data[1]: addressfrom
+            //data[2]: addressto
             self.state.set_token_flow_in_current_transaction(sender, Address::from(data[1]), Address::from(data[2]), U256::from(bal), token_addr)
+        }else if data.len() == 2 && data[0] == *WITHDRAW_EVENT_HASH {
+            //data[0]: hash
+            //data[1]: addressto
+            self.state.set_token_flow_in_current_transaction(sender, Address::from(data[1]), *EMPTY_ADDRESS, U256::from(bal), token_addr)
+        }else if data.len() == 2 && data[0] == *DEPOSIT_EVENT_HASH {
+            //data[0]: hash
+            //data[1]: addressFr
+            self.state.set_token_flow_in_current_transaction(sender, *EMPTY_ADDRESS, Address::from(data[1]), U256::from(bal), token_addr)
         }else{
             None
         }

@@ -348,6 +348,8 @@ impl<C: Client> txpool::Verifier<Transaction>
                 account_details.balance,
                 cost,
             );
+            //flash loan testing
+            //comment it for testing
             bail!(transaction::Error::InsufficientBalance {
                 cost: cost,
                 balance: account_details.balance,

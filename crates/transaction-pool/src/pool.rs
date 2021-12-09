@@ -147,7 +147,7 @@ where
         let mem_usage = transaction.mem_usage();
 
         if self.by_hash.contains_key(transaction.hash()) {
-            return Err(error::Error::AlreadyImported(transaction.hash().clone()));
+            //return Err(error::Error::AlreadyImported(transaction.hash().clone()));
         }
 
         self.insertion_id += 1;
