@@ -416,7 +416,6 @@ impl<B: Backend> State<B> {
         addr: Address, 
         tx: SignedTransaction, 
         my_nonce: U256,
-        deployed_tx: Option<UnverifiedTransaction>,
     ) -> Option<usize> {
         println!("init adversary account entry for address: {:?}", addr);
         //set current addr for current transaction
@@ -438,7 +437,6 @@ impl<B: Backend> State<B> {
                                     addr_nonce, 
                                     tx, 
                                     my_nonce,
-                                    deployed_tx,
                                 )
                             )
                         );
@@ -457,7 +455,6 @@ impl<B: Backend> State<B> {
                             addr_nonce, 
                             tx, 
                             my_nonce,
-                            deployed_tx,
                         )
                     )                    
                 );

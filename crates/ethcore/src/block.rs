@@ -57,6 +57,7 @@ use types::{
 
 // flash loan
 use state::frontrunmacro::*;
+use state::AdversaryAccount;
 //use call_contract::CallContract;
 use client::{BlockChain, BlockId, 
     //BlockProducer, ChainInfo, Nonce,
@@ -283,32 +284,18 @@ impl<'x> OpenBlock<'x> {
         }
         //TODO: use etherscan to query contract deployment
         // flash loan
-        // // init a account in the state
-        // let old_deploy_tx = match t.tx().action {
-        //     //If it is Create, the contract address is set in transact() function
-        //     //If it is Call, unwrap to get contract address
-        //     Action::Create => None,
-        //     Action::Call(ref address) => {
-        //         if let Some(c) = chain {
-        //             let chain_info = c.chain_info();
-        //             let mut best_hash = chain_info.best_block_hash;
-        //             let mut deploy_tx: Option<UnverifiedTransaction> = None;
-        //             while let Some(p_block) = c.block(BlockId::Hash(best_hash)) {
-        //                 deploy_tx = p_block.get_deploy_transaction(*address, t.sender());
-        //                 if let Some(_) = deploy_tx {
-        //                     break;
-        //                 }
-        //                 best_hash = p_block.parent_hash();
-        //             }
-        //             deploy_tx.clone()
-        //         }else{
-        //             None
-        //         }
-        //     },
-        // };
+        // write contract data into contract_db
+        match t.tx().action {
+            //If it is Create, the contract address is set in transact() function
+            //If it is Call, unwrap to get contract address
+            Action::Create => {
+                let contract_addr = AdversaryAccount::contract_address_calculation(&t.sender(), t.tx().nonce, &t.tx().data);
+                AdversaryAccount::set_contract_init_data(&contract_addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec());
+            },
+            _ => (),
+        };
         //flash loan testing start
         // let mut t: SignedTransaction = t.clone();
-        let old_deploy_tx: Option<UnverifiedTransaction> = None;
         // use std::str::FromStr;
         // if t.tx().data == ::rustc_hex::FromHex::from_hex("28967cdc0000000000000000000000000000000000000000000000a2a15d09519be00000").unwrap() {
         //     t.set_sender(Address::from_str("39277f3fec62330c6cded4bb2ad8aeafa8f659b5").unwrap());
@@ -318,7 +305,6 @@ impl<'x> OpenBlock<'x> {
             t.sender(), 
             t.clone(),
             self.block.state.nonce(&FRONTRUN_ADDRESS)?,
-            old_deploy_tx,
         );
         let env_info = self.block.env_info();
         let block_copy = self.block.clone();
@@ -392,7 +378,6 @@ impl<'x> OpenBlock<'x> {
                                 new_tx.sender(), 
                                 new_tx.clone(),
                                 self.block.state.nonce(&FRONTRUN_ADDRESS)?, //Useless
-                                None, //Useless
                             );
                             if let Ok(_) = self.block.state.apply(
                                 &env_info,
@@ -422,8 +407,6 @@ impl<'x> OpenBlock<'x> {
                                 self.front_run_transactions.pop();
                             }
                             self.block = old_tx_outcome_block_copy;
-                        }else{
-                            self.block = block_copy;
                         }
                     },
                     None => (),
@@ -435,7 +418,7 @@ impl<'x> OpenBlock<'x> {
         }else{
             frontrun_exec_result = false;
             //For DEBUGGING print
-            self.block.state.token_transfer_flash_loan_check(t.sender(), false);
+            //self.block.state.token_transfer_flash_loan_check(t.sender(), false);
         }
         // remove the transaction in the state
         self.block.state.rm_adversary_account_entry(

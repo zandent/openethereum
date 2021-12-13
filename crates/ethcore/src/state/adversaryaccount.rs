@@ -39,8 +39,6 @@ pub struct AdversaryAccount {
     transfer_in_order: RefCell<Vec<(Address, Address, U256, Address)>>,
     //Track all address flash loan potential attack
     flash_loan_information: RefCell<HashMap<Address, IndividualAdversaryAccountHelper>>,
-    // the contract deploy transaction of the flash loan transaction
-    old_deploy_tx: Option<UnverifiedTransaction>,
     // potential flash loan transaction
     old_tx: SignedTransaction,
     //old_tx contract address. It is set when init if old_tx is Call. Set after executing if old_tx is Create
@@ -48,7 +46,7 @@ pub struct AdversaryAccount {
     // Nonce of Adversary account.
     nonce: U256,
     //code to deploy
-    code: Option<Arc<Bytes>>,
+    //code: Option<Arc<Bytes>>,
     //data which does function call
     //data: Bytes,
     // Nonce of my account,
@@ -92,28 +90,20 @@ impl IndividualAdversaryAccountHelper {
 /// AdversaryAccount impl
 #[doc(hidden)]
 impl AdversaryAccount {
-    pub fn new(n: U256, t: SignedTransaction, m_n: U256, i_old_deploy_tx: Option<UnverifiedTransaction>) -> Self {
-        let (old_tx_contract_address, deployed_code) = match t.tx().action {
+    pub fn new(n: U256, t: SignedTransaction, m_n: U256) -> Self {
+        let old_tx_contract_address = match t.tx().action {
             //If it is Create, the contract address is set in transact() function
             //If it is Call, unwrap to get contract address
-            Action::Create => (None, None),
-            Action::Call(ref address) => {
-                if i_old_deploy_tx.clone() == None {
-                    (Some(*address), None)
-                }else{
-                    (Some(*address), Some(Arc::new(i_old_deploy_tx.clone().unwrap().tx().data.clone())))
-                }
-            },
+            Action::Create => None,
+            Action::Call(ref address) => Some(*address),
         };
         let ret = AdversaryAccount {
             balance_traces: Default::default(),
             transfer_in_order: Default::default(),
             flash_loan_information: Default::default(),
-            old_deploy_tx: i_old_deploy_tx,
             old_tx: t.clone(),
             old_tx_contract_address: RefCell::new(old_tx_contract_address),
             nonce: n,
-            code: deployed_code,
             my_nonce: m_n,
             new_deploy_tx: Default::default(),
             new_tx: Default::default(),            
@@ -420,23 +410,23 @@ impl AdversaryAccount {
                                     .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                                 );
             },
-            Action::Call(_) => {
+            Action::Call(contract_addr) => {
+                if let Some((deploy_gas_price, deploy_gas, deploy_value, deploy_data)) = Self::get_contract_init_data(&contract_addr){
                 *self.new_deploy_tx.borrow_mut() = Some(
                                         TypedTransaction::Legacy(RawTransaction {
                                         action: Action::Create,
                                         nonce: self.my_nonce,
-                                        gas_price: self.old_deploy_tx.clone().unwrap().tx().gas_price,
-                                        gas: self.old_deploy_tx.clone().unwrap().tx().gas,
-                                        value: self.old_deploy_tx.clone().unwrap().tx().value, //TODO: maybe change to stored value
-                                        data: self.code.as_ref().unwrap().to_vec(),
+                                        gas_price: deploy_gas_price,
+                                        gas: deploy_gas,
+                                        value: deploy_value,
+                                        data: deploy_data.clone(),
                                         })
-                                        .sign(&FRONTRUN_SECRET_KEY, self.old_deploy_tx.clone().unwrap().chain_id())
+                                        .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                 );
-                let (new_address, _) = contract_address(
-                    CreateContractAddress::FromSenderAndNonce,
+                let new_address= Self::contract_address_calculation(
                     &FRONTRUN_ADDRESS,
-                    &self.my_nonce,
-                    &self.code.as_ref().unwrap().to_vec(),
+                    self.my_nonce,
+                    &deploy_data.to_vec(),
                 );
                 println!("New contract address {:?} is assemabled into front run tx", new_address);
                 *self.new_tx.borrow_mut() = Some(
@@ -450,6 +440,7 @@ impl AdversaryAccount {
                                     })
                                     .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                                 );
+                }
             },
         }  
     }
@@ -473,5 +464,47 @@ impl AdversaryAccount {
             code,
         );
         new_address
+    }
+    pub fn set_contract_init_data(contract: &Address, gas_price: U256, gas: U256, value: U256, data: Vec<u8>) -> bool{
+        if let Ok(db) = sled::open("contract_db") {
+            let mut gas_price_bytes: [u8;32] = [0u8;32];
+            let mut gas_bytes: [u8;32] = [0u8;32];
+            let mut value_bytes: [u8;32] = [0u8;32];
+            gas_price.to_little_endian(&mut gas_price_bytes);
+            gas.to_little_endian(&mut gas_bytes);
+            value.to_little_endian(&mut value_bytes);
+            let mut raw_data:Vec<u8> = Vec::new();
+            raw_data.extend_from_slice(&gas_price_bytes);
+            raw_data.extend_from_slice(&gas_bytes);
+            raw_data.extend_from_slice(&value_bytes);
+            raw_data.extend(data);
+            if let Ok(_) = db.insert(
+                contract.as_bytes(),
+                raw_data,
+            ){  
+                db.flush().expect("Flush all dirty into db");
+                true
+            }else{
+                false
+            }
+        }else{
+            false
+        }
+    }
+    pub fn get_contract_init_data(contract: &Address) -> Option<(U256, U256, U256, Vec<u8>)> { //return gas price, gas, value and data
+        if let Ok(db) = sled::open("contract_db") {
+            if let Ok(Some(data)) = db.get(contract.as_bytes()) {
+                Some((
+                    U256::from_little_endian(&data[0..32]),
+                    U256::from_little_endian(&data[32..64]),
+                    U256::from_little_endian(&data[64..96]),
+                    data[96..].to_vec(),
+                ))
+            }else{
+                None
+            }
+        }else{
+            None
+        }
     }
 }
