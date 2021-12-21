@@ -40,7 +40,9 @@ use types::{
     basic_account::BasicAccount,
     receipt::{LegacyReceipt, TransactionOutcome, TypedReceipt},
     state_diff::StateDiff,
-    transaction::{SignedTransaction, UnverifiedTransaction,},
+    transaction::{SignedTransaction, 
+        //UnverifiedTransaction,
+    },
 };
 
 use vm::EnvInfo;

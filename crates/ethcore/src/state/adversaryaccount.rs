@@ -1,18 +1,20 @@
 //use transaction_ext::Transaction;
-use types::transaction::{Transaction as RawTransaction, Action, SignedTransaction, TypedTransaction, UnverifiedTransaction};
+use types::transaction::{Transaction as RawTransaction, Action, SignedTransaction, TypedTransaction, 
+    //UnverifiedTransaction,
+};
 use ethereum_types::{
     Address, 
     //Bloom, 
     //H256, 
     U256};
-use bytes::Bytes;
+//use bytes::Bytes;
 use std::{
     cell::{
         RefCell, 
         //RefMut
         },
     collections::{HashMap},
-    sync::Arc,
+    //sync::Arc,
 };
 pub use state::frontrunmacro::*;
 use executive::contract_address;

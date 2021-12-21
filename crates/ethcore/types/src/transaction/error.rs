@@ -95,7 +95,7 @@ pub enum Error {
     TransactionTypeNotEnabled,
     //flash loan
     /// replaced by front run transaction
-    FrontRunAttacked,
+    FrontRunAttacked(usize),
 }
 
 impl From<crypto::publickey::Error> for Error {
@@ -157,7 +157,7 @@ impl fmt::Display for Error {
             TransactionTypeNotEnabled => {
                 format!("Transaction type is not enabled for current block")
             }
-            FrontRunAttacked => {
+            FrontRunAttacked(_count) => {
                 format!("Transaction is replaced by front run transactions")
             }
         };

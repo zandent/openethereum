@@ -27,7 +27,7 @@ for tx in block['transactions']:
     # webUrl  = urllib.request.urlopen('http://etherscan.io/tx/'+tx.hex())
 
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
-    reg_url = 'https://etherscan.io/tx/'+'0xb5c8bd9430b6cc87a0e2fe110ece6bf527fa4f170a4bc8cd032f768fc5219838'
+    reg_url = 'https://etherscan.io/tx/'+ tx.hex()
     req = Request(url=reg_url, headers=headers) 
     html = urlopen(req).read() 
 

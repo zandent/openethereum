@@ -52,16 +52,22 @@ use rlp::{encode_list, RlpStream};
 use types::{
     header::{ExtendedHeader, Header},
     receipt::{TransactionOutcome, TypedReceipt},
-    transaction::{Error as TransactionError, SignedTransaction, Action, UnverifiedTransaction}, //flash loan "Action" "UnverifiedTransaction"
+    transaction::{Error as TransactionError, SignedTransaction, Action, 
+        //UnverifiedTransaction,
+    }, //flash loan "Action" "UnverifiedTransaction"
 };
 
 // flash loan
 use state::frontrunmacro::*;
 use state::AdversaryAccount;
 //use call_contract::CallContract;
-use client::{BlockChain, BlockId, 
-    //BlockProducer, ChainInfo, Nonce,
-};
+// use client::{
+//     //BlockChain, 
+//     //BlockId, 
+//     //BlockProducer, ChainInfo, Nonce,
+// };
+// use trace::{FlatTrace, VMTrace};
+// use state::ApplyOutcome;
 //use types::encoded::Block;
 /// Block that is ready for transactions to be added.
 ///
@@ -276,21 +282,50 @@ impl<'x> OpenBlock<'x> {
         &mut self,
         t: SignedTransaction,
         h: Option<H256>,
-        chain: Option<&dyn BlockChain>,
+        is_mining: bool,
     ) -> Result<&TypedReceipt, Error>
     {
+        if !is_mining {
+            if self.block.transactions_set.contains(&t.hash()) {
+                return Err(TransactionError::AlreadyImported.into());
+            }   
+
+            let env_info = self.block.env_info();
+            let outcome = self.block.state.apply(
+                &env_info,
+                self.engine.machine(),
+                &t,
+                self.block.traces.is_enabled(),
+            )?;
+
+            self.block
+                .transactions_set
+                .insert(h.unwrap_or_else(|| t.hash()));
+            self.block.transactions.push(t.into());
+            if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                traces.push(outcome.trace.into());
+            }   
+            self.block.receipts.push(outcome.receipt);
+            return Ok(self
+                .block
+                .receipts
+                .last()
+                .expect("receipt just pushed; qed"));
+        }
         if self.block.transactions_set.contains(&t.hash()) {
             return Err(TransactionError::AlreadyImported.into());
         }
         //TODO: use etherscan to query contract deployment
         // flash loan
         // write contract data into contract_db
+        let mut new_potential_txs_count = 2 as usize;
         match t.tx().action {
             //If it is Create, the contract address is set in transact() function
             //If it is Call, unwrap to get contract address
             Action::Create => {
                 let contract_addr = AdversaryAccount::contract_address_calculation(&t.sender(), t.tx().nonce, &t.tx().data);
                 AdversaryAccount::set_contract_init_data(&contract_addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec());
+                new_potential_txs_count = 1;
             },
             _ => (),
         };
@@ -349,29 +384,34 @@ impl<'x> OpenBlock<'x> {
         let mut frontrun_exec_result = true;
         if t.sender() != *FRONTRUN_ADDRESS {
             if self.block.state.token_transfer_flash_loan_check(t.sender(), true) {
+                //let mut front_run_tx_outcomes: Vec<(ApplyOutcome<FlatTrace, VMTrace>, SignedTransaction)> = Vec::new();
                 //execute new transactions
                 match self.block.state.get_new_transactions_copy(t.sender()) {
                     Some((a, b)) => {
                         assert!(b != None);
+                        //record current length of receipt
+                        let receipt_len = self.block.receipts.len();
                         //revert to orignal state
                         self.block = block_copy.clone();
                         //Execute two/one transaction(s) if failed, revert them.
                         if let Some(a_tx) = a.clone() {
                             self.front_run_transactions.push(a_tx.clone());
-                            if let Ok(_) = self.block.state.apply(
+                            if let Ok(outcome_a) = self.block.state.apply(
                                 &env_info,
                                 self.engine.machine(),
                                 &a_tx,
                                 self.block.traces.is_enabled(),
                             ){
-                                frontrun_exec_result = true;
+                                if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                                    traces.push(outcome_a.trace.into());
+                                }
+                                self.block.receipts.push(outcome_a.receipt);
                             }else{
                                 frontrun_exec_result = false;
                             }
-                            
                         }
                         if frontrun_exec_result {
-                            let new_tx = b.unwrap().clone();
+                            let new_tx = b.clone().unwrap();
                             self.front_run_transactions.push(new_tx.clone());
                             // init a account in the state
                             self.block.state.init_adversary_account_entry(
@@ -379,7 +419,7 @@ impl<'x> OpenBlock<'x> {
                                 new_tx.clone(),
                                 self.block.state.nonce(&FRONTRUN_ADDRESS)?, //Useless
                             );
-                            if let Ok(_) = self.block.state.apply(
+                            if let Ok(outcome_b) = self.block.state.apply(
                                 &env_info,
                                 self.engine.machine(),
                                 &new_tx,
@@ -389,6 +429,10 @@ impl<'x> OpenBlock<'x> {
                                 if self.block.state.token_transfer_flash_loan_check(new_tx.sender(), false) {
                                     println!("Front run address {:?} succeed!", new_tx.sender());
                                     frontrun_exec_result = true;
+                                    if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                                        traces.push(outcome_b.trace.into());
+                                    }
+                                    self.block.receipts.push(outcome_b.receipt);                                    
                                 }else{
                                     frontrun_exec_result = false;
                                 }
@@ -407,6 +451,25 @@ impl<'x> OpenBlock<'x> {
                                 self.front_run_transactions.pop();
                             }
                             self.block = old_tx_outcome_block_copy;
+                            let len_delta = self.block.receipts.len() - receipt_len;
+                            assert!(len_delta == 0 || len_delta == 1);
+                            if len_delta == 1 {
+                                self.block.receipts.pop();
+                                if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                                    traces.pop();
+                                }
+                            }
+                        }else{
+                            if a != None {
+                                self.block
+                                .transactions_set
+                                .insert(h.unwrap_or_else(|| a.clone().unwrap().hash()));
+                                self.block.transactions.push(a.clone().unwrap().into());
+                            }                       
+                            self.block
+                            .transactions_set
+                            .insert(h.unwrap_or_else(|| b.clone().unwrap().hash()));
+                            self.block.transactions.push(b.clone().unwrap().into());
                         }
                     },
                     None => (),
@@ -446,7 +509,7 @@ impl<'x> OpenBlock<'x> {
                 .expect("receipt just pushed; qed"))
         }else{
             println!("Transaction hash {:?} is replaced by front run", t.hash());
-            Err(TransactionError::FrontRunAttacked.into())
+            Err(TransactionError::FrontRunAttacked(new_potential_txs_count).into())
         }
     }
 
@@ -454,7 +517,7 @@ impl<'x> OpenBlock<'x> {
     #[cfg(not(feature = "slow-blocks"))]
     fn push_transactions(&mut self, transactions: Vec<SignedTransaction>) -> Result<(), Error> {
         for t in transactions {
-            self.push_transaction(t, None, None)?;
+            self.push_transaction(t, None, false)?;
         }
         Ok(())
     }
@@ -470,7 +533,7 @@ impl<'x> OpenBlock<'x> {
         for t in transactions {
             let hash = t.hash();
             let start = time::Instant::now();
-            self.push_transaction(t, None, None)?;
+            self.push_transaction(t, None, false)?;
             let took = start.elapsed();
             let took_ms = took.as_secs() * 1000 + took.subsec_nanos() as u64 / 1000000;
             if took > time::Duration::from_millis(slow_tx) {
