@@ -8,6 +8,15 @@ import re
 
 import os
 
+def mul10000 (input):
+    print('input is ', input)
+    parts = re.search(r'([0-9]+)\.([0-9]+)', input)
+    if (len(parts.group(2)) >=3) :
+        return parts.group(1) + parts.group(2)[0:3]
+    else:
+        return parts.group(1) + parts.group(2) + '0'*(3-len(parts.group(2)))
+
+
 idx = 0
 ret = "erc20_result.txt"
 if os.path.exists(ret):
@@ -20,87 +29,85 @@ token_trans_count = 0
 # print ('https://etherscan.io/tx/'+tx.hex())
 # webUrl  = urllib.request.urlopen('http://etherscan.io/tx/'+tx.hex())
 
-headers = {'User-Agent': 'Mozilla/5.0'}
-reg_url = 'https://etherscan.io/tokens'
-req = Request(url=reg_url, headers=headers) 
-html = urlopen(req).read() 
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.3'}
+total_pages = 10
+for p in range(10, total_pages+1):
+    reg_url = 'https://etherscan.io/tokens?p=' + str(p)
+    print('Requesting webpage', p)
+    req = Request(url=reg_url, headers=headers) 
+    html = urlopen(req).read() 
 
+    #get the result code and print it
+    log = "token.html"
+    f = open(log, "w")
+    f.write(html.decode("utf-8"))
+    f.close()
 
-#get the result code and print it
-log = "token.html"
-f = open(log, "w")
-f.write(html.decode("utf-8"))
-f.close()
+    # Opening file
+    file1 = open(log, 'r')
+    count = 0
+    hashes = []
+    names = []
+    decimals = []
+    prices = []
 
-# Opening file
-file1 = open(log, 'r')
-count = 0
+    for line in file1:
+        l = line.strip()
+        token_line = re.findall(r'href\=\'\/token\/0x[0-9a-fA-F]+\'\>[^\<]+\<', l)
+        # token_line = re.findall(r'href\=\'\/token\/0x[0-9a-fA-F]+\'', l)
+        if token_line:
+            for i in token_line:
+                has_hash = re.search(r'href\=\'\/token\/0x([0-9a-fA-F]+)\'\>([^\<]+)\<',i)
+                if has_hash:
+                    hashes.append(has_hash.group(1))
+                    names.append(has_hash.group(2))
+            #print (token_line)
+            count += len(token_line)
+            #print (len(token_line))
+    file1.close()
+    # print(count)
+    # print(hashes)
+    # print(names)
+    assert(count == len(hashes) and count == len(names))
+    for idx in range(len(hashes)):
+        print(names[idx] + 'hash:' + hashes[idx])
+        reg_url = 'https://etherscan.io/token/0x' + hashes[idx]
+        req = Request(url=reg_url, headers=headers) 
+        html = urlopen(req).read()
+        f = open(log, "w")
+        f.write(html.decode("utf-8"))
+        f.close()
+        file1 = open(log, 'r+')
+        price_len = len(prices)
+        decimal_len = len(decimals)
+        for line in file1:
+            l = line.strip()
+            # price = re.search(r'\s+\$([0-9\,]+\.[0-9]+).+\|\sEtherscan',l)
+            price = re.search(r'on Etherscan shows the price of the Token \$([0-9\,]+\.[0-9]+)', l)
+            if price and price_len == len(prices):
+                parsed_p = re.sub(r'\,','',price.group(1))
+                prices.append(parsed_p)
+                # print(parsed_p)
+            decimal_check = re.search(r'Decimals\:\<\/div\>',l)
+            if decimal_check:
+                file1.readline()
+                decimal = file1.readline().strip()
+                decimals.append(decimal)
+                # print(decimal)
+        file1.close()
+        assert(len(prices) == price_len + 1)
+        assert(len(decimals) == decimal_len + 1)
+        # break
+    prices = [int(float(i)*10000) for i in prices]
+    decimals = [int(i) for i in decimals]
+    # print(len(prices))
+    # print(len(decimals))
+    assert(count == len(prices) and count == len(decimals))
+    # print(prices)
+    # print(decimals)
 
-
-# file2.write(reg_url+'\n')
-# # Using for loop
-# for line in file1:
-#     #count += 1
-#     #print("Line{}: {}".format(count, line.strip()))
-#     l = line.strip()
-#     token_trans_line = re.search(r'Tokens\sTransferred\:', l)
-#     if token_trans_line:
-#         tmp_arr = re.split(r'Tokens\sTransferred\:', l)
-#         new_tmp = tmp_arr[1]
-#         #XXXXXXToXXXXXX
-#         tmp1 = re.split(r'From\<\/.\>', new_tmp)
-#         del tmp1[0]
-#         #print(tmp1)
-#         k=0
-#         for i in tmp1:
-#             #print(i)
-#             tmp2 = re.split(r'To\<\/.\>', i)
-#             #tmp2[0]: XXXXX tmp2[1]: XXXXXXForXXXXX
-#             sender = re.findall(r'\>[^\<]+\<\/span\>\<\/.\>',tmp2[0])
-#             sender = re.sub(r'\<\/span\>\<\/.\>','',sender[0])
-#             sender = re.sub(r'\>','',sender)
-#             # print(senders)
-#             # sender = senders[0]
-#             # length = len(senders[0])
-#             # for j in senders:
-#             #     if len(j) < length:
-#             #         sender = j
-#             receiver = re.findall(r'\>[^\<]+\<\/span\>\<\/.\>',tmp2[1])
-#             receiver = re.sub(r'\<\/span\>\<\/.\>','',receiver[0])
-#             receiver = re.sub(r'\>','',receiver)
-
-#             tmp3 = re.split(r'For\<\/.\>', tmp2[1])
-#             #tmp3[1]: XXXXXXXXX
-#             amt = re.findall(r'\>[\.\d\,\s]+\<\/span\>',tmp3[1])
-#             #print(tmp3[1])
-#             tkn = re.findall(r'\>[\(\)\s\w\$\-\.]+\<\/.\>\<\/div\>',tmp3[1])
-#             # receiver = receivers[0]
-#             # length = len(receivers[0])
-#             # for j in receivers:
-#             #     if len(j) < length:
-#             #         receiver = j
-#             amt = re.sub(r'\<\/span\>','',amt[0])
-#             amt = re.sub(r'\>','',amt)
-#             amt = re.sub(r'\s','',amt)
-#             if tkn:
-#                 tkn = re.sub(r'\<\/.\>\<\/div\>','',tkn[0])
-#                 tkn = re.sub(r'\>','',tkn)
-#             else:
-#                 tkn = "N/A"
-#             print("Step:",k)
-#             k=k+1
-#             print("From",sender,"To",receiver,"For",amt,tkn)
-#             file2.write("Step: "+str(k)+"\n"+"From "+sender+" To "+receiver+" For "+amt+' '+tkn+'\n')
-#             #print(tmp3[1])
-#         token_trans_count = token_trans_count + 1
-#         break
-    
-# # Closing files
-# file1.close()
-# idx=idx+1
-# print(idx,'/',len(block['transactions']))
-# file2.write(str(idx) + '/' + str(len(block['transactions']))+'\n') 
-# file2.write('Token Transfer: '+ str(token_trans_count)+'\n') 
-
-# file2.write('\nToken Transfer: ' + str(token_trans_count) +'\nNormal Transfer: '+str(len(block['transactions'])-token_trans_count))
-file2.close()
+    out = "parsed_token.txt"
+    file2 = open(out, 'a')
+    for i in range(count):
+        file2.write('//'+names[i]+' '+ str(decimals[i]) +'\n'+'(Address::from_str("' + hashes[i] + '").unwrap(), (U256::from(' + str(prices[i]) + '),U256::from_dec_str("1' + '0'*decimals[i] + '").unwrap())),' + '\n')
+    file2.close()

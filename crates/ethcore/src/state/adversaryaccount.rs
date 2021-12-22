@@ -162,7 +162,8 @@ impl AdversaryAccount {
         amt: U256,
         token_addr: Address,
     ) -> Option<U256> {
-        match CONTRACT_ADDRESSES.iter().position(|val| *val == token_addr) {
+        match ERC_TOKEN_INFORMATION_MAP.get(&token_addr).map(|value| value.clone()) {
+        // match CONTRACT_ADDRESSES.iter().position(|val| *val == token_addr) {
             Some(_) => {
                 self.transfer_in_order.borrow_mut().push((addrfrom, addrto, amt, token_addr));
                 self.set_balance(addrfrom, addrto, amt, token_addr, true);
@@ -228,9 +229,9 @@ impl AdversaryAccount {
                     let mut earn_flag = true;
                     let mut benefit = U256::zero();
                     for (a, b, c) in values.iter() {
-                        match CONTRACT_ADDRESSES.iter().position(|val| *val == *a) {
-                            Some(idx) => {
-                                let net_value = c.saturating_mul(TOKEN_USD_PRICES[idx]).checked_div(TOKEN_DECIMAL_POINTS[idx]).unwrap();
+                        match ERC_TOKEN_INFORMATION_MAP.get(a).map(|value| value.clone()) {
+                            Some((price, decimal)) => {
+                                let net_value = c.saturating_mul(price).checked_div(decimal).unwrap();
                                 if earn_flag {
                                     if *b {
                                         earn_flag = true;
