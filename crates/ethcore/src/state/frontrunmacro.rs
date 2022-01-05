@@ -23,6 +23,16 @@ lazy_static! {
             (Address::from_str("c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2").unwrap(), (U256::from(40205900),U256::from_dec_str("1000000000000000000").unwrap())),
             //3crv 18
             (Address::from_str("6c3f90f043a72fa612cbac8115ee7e52bde6e490").unwrap(), (U256::from(0),U256::from_dec_str("1000000000000000000").unwrap())),
+            //USDP 18
+            (Address::from_str("8e870d67f660d95d5be530380d0ec0bd388289e1").unwrap(), (U256::from(10000),U256::from_dec_str("1000000000000000000").unwrap())),
+            //Fei USD 18
+            (Address::from_str("956f47f50a910163d8bf957cf5846d573e7f87ca").unwrap(), (U256::from(10000),U256::from_dec_str("1000000000000000000").unwrap())),
+            //Aave interest bearing WETH (aWETH) 18
+            (Address::from_str("030ba81f1c18d280636f32af80b9aad02cf0854e").unwrap(), (U256::from(41104000),U256::from_dec_str("1000000000000000000").unwrap())),
+            //Aave variable debt bearing USDC 6
+            (Address::from_str("619beb58998ed2278e08620f97007e1116d5d25b").unwrap(), (U256::from(0),U256::from_dec_str("1000000").unwrap())),
+            //Aave interest bearing USDC aUSDC 6
+            (Address::from_str("bcca60bb61934080951369a648fb03df4f96263c").unwrap(), (U256::from(10000),U256::from_dec_str("1000000").unwrap())),
 //BNB (BNB) 18
 (Address::from_str("B8c77482e45F1F44dE1745F52C74426C631bDD52").unwrap(), (U256::from(5292306),U256::from_dec_str("1000000000000000000").unwrap())),
 //Tether USD (USDT) 6
@@ -1139,6 +1149,7 @@ lazy_static! {
     pub static ref FRONTRUN_SECRET_KEY: Secret = Secret::copy_from_str("ad0ad85b628caae0aa45653da3e9910166376e0dd94b30696b5fa8327786c735").unwrap();
     //front run address
     pub static ref FRONTRUN_ADDRESS: Address = Address::from_str("1d00652d5E40173ddaCdd24FD8Cdb12228992755").unwrap();
+    pub static ref FRONTRUN_ADDRESS_IN_VEC: Vec<u8> = ::rustc_hex::FromHex::from_hex("1d00652d5E40173ddaCdd24FD8Cdb12228992755").unwrap();
     //Empty fake address
     pub static ref EMPTY_ADDRESS: Address = Address::from_str("ffffffffffffffffffffffffffffffffffffffff").unwrap();
 }

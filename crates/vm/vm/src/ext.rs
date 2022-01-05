@@ -65,6 +65,8 @@ pub enum CreateContractAddress {
 
 /// Externalities interface for EVMs
 pub trait Ext {
+    /// store created addresses
+    fn store_contract_address (&self, new_contract_addr: Address);
     /// set balance when CALL occurred
     fn set_token_flow(&self, sender: Address, addrfrom: Address, addrto: Address, amt: U256, token_addr: Address)-> Option<U256>;
 

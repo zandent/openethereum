@@ -169,6 +169,7 @@ impl FakeExt {
 
 impl Ext for FakeExt {
     // flash loan
+    fn store_contract_address (&self, _new_contract_addr: Address) {}
     fn set_token_flow(&self, _sender: Address, _addrfrom: Address, _addrto: Address, amt: U256, _token_addr: Address) -> Option<U256>{
         Some(amt)
     }

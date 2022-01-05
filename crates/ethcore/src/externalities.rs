@@ -122,6 +122,9 @@ where
     V: VMTracer,
     B: StateBackend,
 {
+    fn store_contract_address (&self, new_contract_addr: Address) {
+        self.state.store_contract_address(new_contract_addr);
+    }
     fn set_token_flow(&self, sender: Address, addrfrom: Address, addrto: Address, amt: U256, token_addr: Address) -> Option<U256> {
         self.state.set_token_flow_in_current_transaction(sender, addrfrom, addrto, amt, token_addr)
     }

@@ -38,6 +38,8 @@ node_modules
 
 # Build artifacts
 out/
+run/
+contract_db/
 
 .vscode
 rls/

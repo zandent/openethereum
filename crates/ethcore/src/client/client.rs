@@ -321,7 +321,10 @@ impl Importer {
                 let bytes = block.bytes.clone();
                 let hash = header.hash();
                 //flash loan testing
-                // if header.number() >= 11490242{
+                // if header.number() >= 13253447 {
+                //     if header.number() == 13253447 {
+                //         self.check_and_lock_block(&bytes, block, client);
+                //     }
                 //     break;
                 // }
                 let is_invalid = invalid_blocks.contains(header.parent_hash());

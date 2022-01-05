@@ -273,7 +273,7 @@ impl<T: InformantData> Informant<T> {
             true => format!("{}", c.paint(t)),
             false => t,
         };
-
+        // if chain_info.best_block_number % 100 == 0 || chain_info.best_block_number % 100 == 1 || chain_info.best_block_number % 100 == 2 {
         info!(target: "import", "{}{} {}  {}  {}",
             match importing {
                 true => match snapshot_sync {
@@ -297,8 +297,8 @@ impl<T: InformantData> Informant<T> {
                     true => {
                         self.snapshot.as_ref().map_or(String::new(), |s|
                             match s.restoration_status() {
-                                RestorationStatus::Ongoing { state_chunks, block_chunks, state_chunks_done, block_chunks_done, .. } => {
-                                    format!("Syncing snapshot {}/{}", state_chunks_done + block_chunks_done, state_chunks + block_chunks)
+                                RestorationStatus::Ongoing {block_number, state_chunks, block_chunks, state_chunks_done, block_chunks_done, .. } => {
+                                    format!("Syncing snapshot {} {}/{}", block_number, state_chunks_done + block_chunks_done, state_chunks + block_chunks)
                                 },
                                 RestorationStatus::Initializing { chunks_done } => {
                                     format!("Snapshot initializing ({} chunks restored)", chunks_done)
@@ -345,6 +345,7 @@ impl<T: InformantData> Informant<T> {
                 _ => String::new(),
             },
         );
+        // }
     }
 }
 

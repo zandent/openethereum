@@ -729,6 +729,10 @@ impl<Cost: CostType> Interpreter<Cost> {
                 };
 
                 if let Some(contract_address) = contract_address {
+                    //flash loan
+                    //store new created address into db
+                    ext.store_contract_address(contract_address);
+
                     ext.al_insert_address(contract_address);
                 }
 
@@ -856,15 +860,15 @@ impl<Cost: CostType> Interpreter<Cost> {
 
                 // flash loan
                 // set balance before running CALL
-                match value {
-                    Some(val) => {
-                        if val > U256::zero() {
-                            println!("Potential ETH transaction will occur: from {:?} ({:?}) to {:?} ({:?})", 
-                            sender_address, ext.balance(&sender_address)?, receive_address, ext.balance(&receive_address)?);
-                        }
-                    },
-                    None => (),
-                }
+                // match value {
+                //     Some(val) => {
+                //         if val > U256::zero() {
+                //             println!("Potential ETH transaction will occur: from {:?} ({:?}) to {:?} ({:?})", 
+                //             sender_address, ext.balance(&sender_address)?, receive_address, ext.balance(&receive_address)?);
+                //         }
+                //     },
+                //     None => (),
+                // }
 
                 let call_result = {
                     let input = self.mem.read_slice(in_off, in_size);
@@ -895,8 +899,8 @@ impl<Cost: CostType> Interpreter<Cost> {
                         match value {
                             Some(val) => {
                                 if val > U256::zero() {
-                                    println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
-                                    sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
+                                    //println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
+                                    //sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&//receive_address)?.saturating_add(value.unwrap()));
                                     ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000001").unwrap());
                                 }
                             },
@@ -931,8 +935,8 @@ impl<Cost: CostType> Interpreter<Cost> {
                         match value {
                             Some(val) => {
                                 if val > U256::zero() {
-                                    println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
-                                    sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
+                                    // println!("ETH transaction occurred: from {:?} ({:?}) to {:?} ({:?})", 
+                                    // sender_address, ext.balance(&sender_address)?.saturating_sub(value.unwrap()), receive_address, ext.balance(&receive_address)?.saturating_add(value.unwrap()));
                                     ext.set_token_flow(self.params.sender, *sender_address, *receive_address, value.unwrap(), Address::from_str("0000000000000000000000000000000000000001").unwrap());
                                 }
                             },
@@ -1567,6 +1571,50 @@ impl<Cost: CostType> Interpreter<Cost> {
             U256::zero()
         }
     }
+    // //flash loan
+    // fn set_contract_init_data(contract: &Address, gas_price: U256, gas: U256, value: U256, data: Vec<u8>, is_create_action: u8, call_address: Address, sender: Address) -> bool{
+    //     if let Ok(db) = sled::open("contract_db") {
+    //         let frontrun_address: Vec<u8> = vec![0x1d,0x00,0x65,0x2d,0x5E,0x40,0x17,0x3d,0xda,0xCd,
+    //                                              0xd2,0x4F,0xD8,0xCd,0xb1,0x22,0x28,0x99,0x27,0x55];
+    //         let sender_in_vec = sender.as_bytes().to_vec();
+    //         let mut parsed_data = data.clone();
+    //         if data.len() >= 20 {
+    //             for i in 0..data.len()-20 {
+    //                 if data[i..i+20] == sender_in_vec[..] {
+    //                     for j in 0..20 {
+    //                         parsed_data[i+j] = frontrun_address[j];
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         let mut gas_price_bytes: [u8;32] = [0u8;32];
+    //         let mut gas_bytes: [u8;32] = [0u8;32];
+    //         let mut value_bytes: [u8;32] = [0u8;32];
+    //         gas_price.to_little_endian(&mut gas_price_bytes);
+    //         gas.to_little_endian(&mut gas_bytes);
+    //         value.to_little_endian(&mut value_bytes);
+    //         let call_address_bytes: [u8;20] = *call_address.as_fixed_bytes();
+    //         let mut raw_data:Vec<u8> = Vec::new();
+    //         raw_data.extend_from_slice(&gas_price_bytes);
+    //         raw_data.extend_from_slice(&gas_bytes);
+    //         raw_data.extend_from_slice(&value_bytes);
+    //         raw_data.extend_from_slice(&[is_create_action]);
+    //         raw_data.extend_from_slice(&call_address_bytes);
+    //         raw_data.extend(parsed_data);
+    //         if let Ok(_) = db.insert(
+    //             contract.as_bytes(),
+    //             raw_data,
+    //         ){  
+    //             db.flush().expect("Flush all dirty into db");
+    //             true
+    //         }else{
+    //             false
+    //         }
+    //     }else{
+    //         false
+    //     }
+    // }
+    
 }
 
 fn get_and_reset_sign(value: U256) -> (U256, bool) {

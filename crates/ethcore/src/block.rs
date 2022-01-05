@@ -60,6 +60,9 @@ use types::{
 // flash loan
 use state::frontrunmacro::*;
 use state::AdversaryAccount;
+//flash loan testing
+//use state::CleanupMode;
+
 //use call_contract::CallContract;
 // use client::{
 //     //BlockChain, 
@@ -285,11 +288,26 @@ impl<'x> OpenBlock<'x> {
         is_mining: bool,
     ) -> Result<&TypedReceipt, Error>
     {
-        if !is_mining {
-            if self.block.transactions_set.contains(&t.hash()) {
-                return Err(TransactionError::AlreadyImported.into());
-            }   
-
+        if self.block.transactions_set.contains(&t.hash()) {
+            return Err(TransactionError::AlreadyImported.into());
+        }
+        // flash loan
+        // write contract data into contract_db
+        let mut new_potential_txs_count = 2 as usize;
+        let mut is_create: u8 = 0u8;
+        let mut call_addr: Address = Address::from([0u8;20]);
+        match t.tx().action {
+            //If it is Create, the contract address is set in transact() function
+            //If it is Call, unwrap to get contract address
+            Action::Create => {
+                let contract_addr = AdversaryAccount::contract_address_calculation(&t.sender(), t.tx().nonce, &t.tx().data);
+                AdversaryAccount::set_contract_init_data(&contract_addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec(), 1u8, Address::from([0u8;20]), t.sender().clone());
+                new_potential_txs_count = 1;
+                is_create = 1;
+            },
+            Action::Call(addr) => {call_addr = addr},
+        };
+        if !is_mining {  
             let env_info = self.block.env_info();
             let outcome = self.block.state.apply(
                 &env_info,
@@ -297,7 +315,13 @@ impl<'x> OpenBlock<'x> {
                 &t,
                 self.block.traces.is_enabled(),
             )?;
-
+            let temp_contract_addresses = self.block.state.get_temp_created_addresses();
+            if !temp_contract_addresses.is_empty() {
+                for addr in temp_contract_addresses{
+                    AdversaryAccount::set_contract_init_data(&addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec(), is_create, call_addr, t.sender().clone());
+                }
+            }
+            self.block.state.clear_contract_address();
             self.block
                 .transactions_set
                 .insert(h.unwrap_or_else(|| t.hash()));
@@ -312,28 +336,14 @@ impl<'x> OpenBlock<'x> {
                 .last()
                 .expect("receipt just pushed; qed"));
         }
-        if self.block.transactions_set.contains(&t.hash()) {
-            return Err(TransactionError::AlreadyImported.into());
-        }
-        //TODO: use etherscan to query contract deployment
-        // flash loan
-        // write contract data into contract_db
-        let mut new_potential_txs_count = 2 as usize;
-        match t.tx().action {
-            //If it is Create, the contract address is set in transact() function
-            //If it is Call, unwrap to get contract address
-            Action::Create => {
-                let contract_addr = AdversaryAccount::contract_address_calculation(&t.sender(), t.tx().nonce, &t.tx().data);
-                AdversaryAccount::set_contract_init_data(&contract_addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec());
-                new_potential_txs_count = 1;
-            },
-            _ => (),
-        };
         //flash loan testing start
         // let mut t: SignedTransaction = t.clone();
         // use std::str::FromStr;
         // if t.tx().data == ::rustc_hex::FromHex::from_hex("28967cdc0000000000000000000000000000000000000000000000a2a15d09519be00000").unwrap() {
         //     t.set_sender(Address::from_str("39277f3fec62330c6cded4bb2ad8aeafa8f659b5").unwrap());
+        // }
+        // if t.hash() == H256::from_str("83e1ec9483679d7f6e01a5b254b9102d4a5ee14f2e62d799e8b9185043242dd8").unwrap() {
+        //      println!("Target tx found!!!");
         // }
         //flash loan testing end
         self.block.state.init_adversary_account_entry(
@@ -342,17 +352,23 @@ impl<'x> OpenBlock<'x> {
             self.block.state.nonce(&FRONTRUN_ADDRESS)?,
         );
         let env_info = self.block.env_info();
-        let block_copy = self.block.clone();
         //flash loan testing start
         // let flash_loan_testing_blk_cpy = self.block.clone();
         //flash loan testing end
-        let outcome = self.block.state.apply(
+        self.block.state.checkpoint();
+        let mut outcome = self.block.state.apply(
             &env_info,
             self.engine.machine(),
             &t,
             self.block.traces.is_enabled(),
         )?;
-        let old_tx_outcome_block_copy = self.block.clone();
+        let temp_contract_addresses = self.block.state.get_temp_created_addresses();
+        if !temp_contract_addresses.is_empty() {
+            for addr in temp_contract_addresses{
+                AdversaryAccount::set_contract_init_data(&addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec(), is_create, call_addr, t.sender().clone());
+            }
+        }
+        self.block.state.clear_contract_address();
         // // For DEBUGGING: print addresses Option<Vec<(Address, Vec<(Address, U256)>)>>
         // match self.block.state.identify_beneficiary(t.sender()) {
         //     Some(val) => {
@@ -382,20 +398,37 @@ impl<'x> OpenBlock<'x> {
         //     None => println!("No victim during the Tx"),
         // }
         let mut frontrun_exec_result = true;
+        let mut is_state_checkpoint_revert = false;
         if t.sender() != *FRONTRUN_ADDRESS {
             if self.block.state.token_transfer_flash_loan_check(t.sender(), true) {
                 //let mut front_run_tx_outcomes: Vec<(ApplyOutcome<FlatTrace, VMTrace>, SignedTransaction)> = Vec::new();
                 //execute new transactions
                 match self.block.state.get_new_transactions_copy(t.sender()) {
                     Some((a, b)) => {
-                        assert!(b != None);
+                        if b != None {
                         //record current length of receipt
                         let receipt_len = self.block.receipts.len();
                         //revert to orignal state
-                        self.block = block_copy.clone();
+                        self.block.state.revert_to_checkpoint();
+                        self.block.state.checkpoint();
+                        is_state_checkpoint_revert = true;
                         //Execute two/one transaction(s) if failed, revert them.
                         if let Some(a_tx) = a.clone() {
                             self.front_run_transactions.push(a_tx.clone());
+
+                            //flash loan mining testing
+                            // //add balance to front run address
+                            // let balance = self.block.state.balance(&FRONTRUN_ADDRESS)?;
+                            // let needed_balance = a_tx
+                            //     .tx()
+                            //     .value
+                            //     .saturating_add(a_tx.tx().gas.saturating_mul(a_tx.tx().gas_price));
+                            // if balance < needed_balance {
+                            //     // give the sender a sufficient balance
+                            //     self.block.state
+                            //         .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty)?;
+                            // }
+
                             if let Ok(outcome_a) = self.block.state.apply(
                                 &env_info,
                                 self.engine.machine(),
@@ -411,8 +444,31 @@ impl<'x> OpenBlock<'x> {
                             }
                         }
                         if frontrun_exec_result {
-                            let new_tx = b.clone().unwrap();
+                            let mut new_tx = b.clone().unwrap();
+                            if let Some(a_tx) = a.clone(){
+                                if let Action::Call(_) = a_tx.tx().action {
+                                    let temp_contract_addresses = self.block.state.get_temp_created_addresses();
+                                    if !temp_contract_addresses.is_empty() {
+                                        new_tx = AdversaryAccount::overwrite_new_tx(new_tx, *temp_contract_addresses.last().unwrap());
+                                    }
+                                    self.block.state.clear_contract_address();
+                                }
+                            }
                             self.front_run_transactions.push(new_tx.clone());
+
+                            //flash loan mining testing
+                            // //add balance to front run address
+                            // let balance = self.block.state.balance(&FRONTRUN_ADDRESS)?;
+                            // let needed_balance = new_tx
+                            //     .tx()
+                            //     .value
+                            //     .saturating_add(new_tx.tx().gas.saturating_mul(new_tx.tx().gas_price));
+                            // if balance < needed_balance {
+                            //     // give the sender a sufficient balance
+                            //     self.block.state
+                            //         .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty)?;
+                            // }
+                            
                             // init a account in the state
                             self.block.state.init_adversary_account_entry(
                                 new_tx.sender(), 
@@ -450,7 +506,6 @@ impl<'x> OpenBlock<'x> {
                             if a != None {
                                 self.front_run_transactions.pop();
                             }
-                            self.block = old_tx_outcome_block_copy;
                             let len_delta = self.block.receipts.len() - receipt_len;
                             assert!(len_delta == 0 || len_delta == 1);
                             if len_delta == 1 {
@@ -471,8 +526,11 @@ impl<'x> OpenBlock<'x> {
                             .insert(h.unwrap_or_else(|| b.clone().unwrap().hash()));
                             self.block.transactions.push(b.clone().unwrap().into());
                         }
+                        }else{ //if b is none meaning no contract address is found in contractdb
+                            frontrun_exec_result = false;
+                        }
                     },
-                    None => (),
+                    None => {panic!("Should never reach here!");},
                 }
 
             }else{
@@ -483,17 +541,18 @@ impl<'x> OpenBlock<'x> {
             //For DEBUGGING print
             //self.block.state.token_transfer_flash_loan_check(t.sender(), false);
         }
-        // remove the transaction in the state
-        self.block.state.rm_adversary_account_entry(
-            t.sender(), 
-            t.clone(),
-        );
-        //flash loan testing start
-        // self.block = flash_loan_testing_blk_cpy;
-        // Err(TransactionError::FrontRunAttacked.into())
-        //flash loan testing end
         //TODO: comment out below without flash loan full node testing
+        self.block.state.discard_checkpoint();
         if !frontrun_exec_result {
+            if is_state_checkpoint_revert {
+                self.block.state.revert_to_checkpoint();
+                outcome = self.block.state.apply(
+                    &env_info,
+                    self.engine.machine(),
+                    &t,
+                    self.block.traces.is_enabled(),
+                )?;
+            }
             self.block
                 .transactions_set
                 .insert(h.unwrap_or_else(|| t.hash()));
@@ -510,6 +569,29 @@ impl<'x> OpenBlock<'x> {
         }else{
             println!("Transaction hash {:?} is replaced by front run", t.hash());
             Err(TransactionError::FrontRunAttacked(new_potential_txs_count).into())
+            
+            //flash loan testing
+            // self.block.state.revert_to_checkpoint();
+            // let outcome = self.block.state.apply(
+            //     &env_info,
+            //     self.engine.machine(),
+            //     &t,
+            //     self.block.traces.is_enabled(),
+            // )?;
+
+            // self.block
+            // .transactions_set
+            // .insert(h.unwrap_or_else(|| t.hash()));
+            // self.block.transactions.push(t.into());
+            // if let Tracing::Enabled(ref mut traces) = self.block.traces {
+            //     traces.push(outcome.trace.into());
+            // }
+            // self.block.receipts.push(outcome.receipt);
+            // Ok(self
+            //     .block
+            //     .receipts
+            //     .last()
+            //     .expect("receipt just pushed; qed"))
         }
     }
 
@@ -517,7 +599,7 @@ impl<'x> OpenBlock<'x> {
     #[cfg(not(feature = "slow-blocks"))]
     fn push_transactions(&mut self, transactions: Vec<SignedTransaction>) -> Result<(), Error> {
         for t in transactions {
-            self.push_transaction(t, None, false)?;
+            self.push_transaction(t, None, true)?;
         }
         Ok(())
     }
