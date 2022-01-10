@@ -61,7 +61,7 @@ use types::{
 use state::frontrunmacro::*;
 use state::AdversaryAccount;
 //flash loan testing
-use state::CleanupMode;
+// use state::CleanupMode;
 
 //use call_contract::CallContract;
 // use client::{
@@ -507,26 +507,26 @@ impl<'x> OpenBlock<'x> {
                                 self.front_run_transactions.pop();
                             }
                             //flash loan testing UNCOMMENT it all when NOT testing
-                            // let len_delta = self.block.receipts.len() - receipt_len;
-                            // assert!(len_delta == 0 || len_delta == 1);
-                            // if len_delta == 1 {
-                            //     self.block.receipts.pop();
-                            //     if let Tracing::Enabled(ref mut traces) = self.block.traces {
-                            //         traces.pop();
-                            //     }
-                            // }
+                            let len_delta = self.block.receipts.len() - receipt_len;
+                            assert!(len_delta == 0 || len_delta == 1);
+                            if len_delta == 1 {
+                                self.block.receipts.pop();
+                                if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                                    traces.pop();
+                                }
+                            }
                         }else{
                             //flash loan testing UNCOMMENT it all when NOT testing
-                            // if a != None {
-                            //     self.block
-                            //     .transactions_set
-                            //     .insert(h.unwrap_or_else(|| a.clone().unwrap().hash()));
-                            //     self.block.transactions.push(a.clone().unwrap().into());
-                            // }                       
-                            // self.block
-                            // .transactions_set
-                            // .insert(h.unwrap_or_else(|| b.clone().unwrap().hash()));
-                            // self.block.transactions.push(b.clone().unwrap().into());
+                            if a != None {
+                                self.block
+                                .transactions_set
+                                .insert(h.unwrap_or_else(|| a.clone().unwrap().hash()));
+                                self.block.transactions.push(a.clone().unwrap().into());
+                            }                       
+                            self.block
+                            .transactions_set
+                            .insert(h.unwrap_or_else(|| b.clone().unwrap().hash()));
+                            self.block.transactions.push(b.clone().unwrap().into());
                         }
                         }else{ //if b is none meaning no contract address is found in contractdb
                             frontrun_exec_result = false;
@@ -603,7 +603,7 @@ impl<'x> OpenBlock<'x> {
     #[cfg(not(feature = "slow-blocks"))]
     fn push_transactions(&mut self, transactions: Vec<SignedTransaction>) -> Result<(), Error> {
         for t in transactions {
-            self.push_transaction(t, None, true)?;
+            self.push_transaction(t, None, false)?;
         }
         Ok(())
     }
