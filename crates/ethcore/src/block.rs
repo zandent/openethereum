@@ -61,7 +61,7 @@ use types::{
 use state::frontrunmacro::*;
 use state::AdversaryAccount;
 //flash loan testing
-//use state::CleanupMode;
+use state::CleanupMode;
 
 //use call_contract::CallContract;
 // use client::{
@@ -506,25 +506,27 @@ impl<'x> OpenBlock<'x> {
                             if a != None {
                                 self.front_run_transactions.pop();
                             }
-                            let len_delta = self.block.receipts.len() - receipt_len;
-                            assert!(len_delta == 0 || len_delta == 1);
-                            if len_delta == 1 {
-                                self.block.receipts.pop();
-                                if let Tracing::Enabled(ref mut traces) = self.block.traces {
-                                    traces.pop();
-                                }
-                            }
+                            //flash loan testing UNCOMMENT it all when NOT testing
+                            // let len_delta = self.block.receipts.len() - receipt_len;
+                            // assert!(len_delta == 0 || len_delta == 1);
+                            // if len_delta == 1 {
+                            //     self.block.receipts.pop();
+                            //     if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                            //         traces.pop();
+                            //     }
+                            // }
                         }else{
-                            if a != None {
-                                self.block
-                                .transactions_set
-                                .insert(h.unwrap_or_else(|| a.clone().unwrap().hash()));
-                                self.block.transactions.push(a.clone().unwrap().into());
-                            }                       
-                            self.block
-                            .transactions_set
-                            .insert(h.unwrap_or_else(|| b.clone().unwrap().hash()));
-                            self.block.transactions.push(b.clone().unwrap().into());
+                            //flash loan testing UNCOMMENT it all when NOT testing
+                            // if a != None {
+                            //     self.block
+                            //     .transactions_set
+                            //     .insert(h.unwrap_or_else(|| a.clone().unwrap().hash()));
+                            //     self.block.transactions.push(a.clone().unwrap().into());
+                            // }                       
+                            // self.block
+                            // .transactions_set
+                            // .insert(h.unwrap_or_else(|| b.clone().unwrap().hash()));
+                            // self.block.transactions.push(b.clone().unwrap().into());
                         }
                         }else{ //if b is none meaning no contract address is found in contractdb
                             frontrun_exec_result = false;
@@ -542,7 +544,6 @@ impl<'x> OpenBlock<'x> {
             //self.block.state.token_transfer_flash_loan_check(t.sender(), false);
         }
         //TODO: comment out below without flash loan full node testing
-        self.block.state.discard_checkpoint();
         if !frontrun_exec_result {
             if is_state_checkpoint_revert {
                 self.block.state.revert_to_checkpoint();
@@ -552,6 +553,8 @@ impl<'x> OpenBlock<'x> {
                     &t,
                     self.block.traces.is_enabled(),
                 )?;
+            }else{
+                self.block.state.discard_checkpoint();
             }
             self.block
                 .transactions_set
@@ -568,6 +571,7 @@ impl<'x> OpenBlock<'x> {
                 .expect("receipt just pushed; qed"))
         }else{
             println!("Transaction hash {:?} is replaced by front run", t.hash());
+            self.block.state.discard_checkpoint();
             Err(TransactionError::FrontRunAttacked(new_potential_txs_count).into())
             
             //flash loan testing
