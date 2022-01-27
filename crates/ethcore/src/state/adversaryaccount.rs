@@ -331,7 +331,8 @@ impl AdversaryAccount {
     }
     pub fn find_flash_loan_end_positions(&self) -> Option<(Vec<(Address, Address, U256, Address)>, Vec<(Address, Address, U256, Address)>)>{
         let mut flash_loan_start = Vec::new();
-        let mut flash_loan_end = Vec::new();
+        let mut flash_loan_start_return = Vec::new();
+        let mut flash_loan_end_return = Vec::new();
         let transfers = self.transfer_in_order.borrow_mut();
         for (from, to, amt, token) in transfers.iter() {
             match FLASH_LOAN_CONTRACT_ADDRESSES.iter().position(|val| *val == *from) {
@@ -340,17 +341,18 @@ impl AdversaryAccount {
             }
             match FLASH_LOAN_CONTRACT_ADDRESSES.iter().position(|val| *val == *to) {
                 Some(_) => {
-                    if let Some(_) = flash_loan_start.iter().position(|i| i.0==*to && i.2<=*amt && i.3==*token){
-                        flash_loan_end.push((*from, *to, *amt, *token));
+                    if let Some(idx) = flash_loan_start.iter().position(|i| i.0==*to && i.2<=*amt && i.3==*token){
+                        flash_loan_start_return.push(flash_loan_start[idx]);
+                        flash_loan_end_return.push((*from, *to, *amt, *token));
                     }
                 },
                 None => (),
             }
         }
-        if flash_loan_end.is_empty() || flash_loan_end.len() != flash_loan_start.len(){
+        if flash_loan_end_return.is_empty() {
             None
         }else{
-            Some((flash_loan_start, flash_loan_end))
+            Some((flash_loan_start_return, flash_loan_end_return))
         }
     }
     //If a flash loan attack is detected, return true. Otherwise, false.
@@ -380,9 +382,11 @@ impl AdversaryAccount {
         //Find some address get amt from flash loan contract address
         //TODO: generally the flash loan receiver is the beneficiary by the end of the transaction. Need to think about corner case
         if let Some((start, _)) = self.find_flash_loan_end_positions() {
-            //DEBUGGING: print all loan receiver
             for (a, b, c, d) in start.iter() {
+                //DEBUGGING: print all loan receiver
                 println!("tx hash: {:?} Flash Loan Address {:?} sends {:?} of token address {:?} to Address {:?}", self.old_tx.hash(), *a, *c, *d, *b);
+                let mut data_ptr = self.old_tx_contract_address.borrow_mut();
+                *data_ptr = Some(*b);
             }
             for (addr, result) in self.flash_loan_information.borrow_mut().iter(){
                 match result.identity {
@@ -414,22 +418,6 @@ impl AdversaryAccount {
         true
     }
     pub fn assemable_new_transactions (&self) {
-        // //flash loan mining testing
-        // use std::str::FromStr;
-        // use ethereum_types::H256;
-        // if self.old_tx.hash() == H256::from_str("83e1ec9483679d7f6e01a5b254b9102d4a5ee14f2e62d799e8b9185043242dd8").unwrap() {
-        //     Self::set_contract_init_data(
-        //         &Address::from_str("50d981a13850633cf3b4a96e7716ab246bae02d7").unwrap(), 
-        //         U256::from_dec_str("41462653171").unwrap(), 
-        //         U256::from_dec_str("271602").unwrap(), 
-        //         U256::from_dec_str("0").unwrap(), 
-        //         ::rustc_hex::FromHex::from_hex("bb7e70ef000000000000000000000000ba58cb5c5c8c710d26949f89a61e7f1edce91d7100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000").unwrap(),
-        //         0u8, 
-        //         Address::from_str("2971adfa57b20e5a416ae5a708a8655a9c74f723").unwrap(),
-        //         Address::from_str("ba58cb5c5c8c710d26949f89a61e7f1edce91d71").unwrap()
-        //     );
-        // }
-
         match self.old_tx.tx().action {
             Action::Create => {
                 *self.new_deploy_tx.borrow_mut() = None;
@@ -446,7 +434,7 @@ impl AdversaryAccount {
                                 );
             },
             Action::Call(contract_addr) => {
-                if let Some((deploy_gas_price, deploy_gas, deploy_value, is_create_action, call_address, deploy_data)) = Self::get_contract_init_data(&contract_addr){
+                if let Some((deploy_gas_price, deploy_gas, deploy_value, is_create_action, call_address, deploy_data)) = Self::get_contract_init_data(&(*self.old_tx_contract_address.borrow()).unwrap()){
                 *self.new_deploy_tx.borrow_mut() = Some(
                                         TypedTransaction::Legacy(RawTransaction {
                                         action: match is_create_action { 1u8 => Action::Create, _=> Action::Call(call_address),},
@@ -465,11 +453,17 @@ impl AdversaryAccount {
                 );
                 println!("New contract address {:?} is assemabled into front run tx", new_address);
                 //Replace contract address and sender address field in data if having.
-                let call_data = Self::replace_hardcoded_address_in_data(contract_addr, new_address, self.old_tx.tx().data.to_vec());
+                let call_data = Self::replace_hardcoded_address_in_data((*self.old_tx_contract_address.borrow()).unwrap(), new_address, self.old_tx.tx().data.to_vec());
                 let call_data = Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, call_data);
                 *self.new_tx.borrow_mut() = Some(
                                     TypedTransaction::Legacy(RawTransaction {
-                                    action: Action::Call(new_address),
+                                    action: Action::Call(
+                                        match contract_addr == (*self.old_tx_contract_address.borrow()).unwrap()
+                                            { 
+                                                true => new_address, 
+                                                _=> contract_addr,
+                                            }
+                                        ),
                                     nonce: self.my_nonce.saturating_add(U256::one()),
                                     gas_price: self.old_tx.tx().gas_price,
                                     gas: self.old_tx.tx().gas,
@@ -479,7 +473,7 @@ impl AdversaryAccount {
                                     .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                                 );
                 }else{
-                    println!("No found information for contract address {:?}. Front run tx assembling failed!", contract_addr); 
+                    println!("No found information for contract address {:?}. Front run tx assembling failed!", (*self.old_tx_contract_address.borrow()).unwrap()); 
                 }
             },
         }  
