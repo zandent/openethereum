@@ -1,0 +1,40 @@
+https://etherscan.io/tx/0xb5c8bd9430b6cc87a0e2fe110ece6bf527fa4f170a4bc8cd032f768fc5219838
+Step: 1
+From dYdX: Solo Margin To bZx Exploiter 1: Contract For 10,000  (WETH)
+Step: 2
+From Compound: cETH Token To bZx Exploiter 1: Contract For 274,843.67745507  (cETH)
+Step: 3
+From Compound: cWBTC Token To bZx Exploiter 1: Contract For 112 Wrapped BTC (WBTC)
+Step: 4
+From bZx: Vault To 0xb017c9936f9271daff23d4c9876651442958a80f For 0.000091505033541987  (WETH)
+Step: 5
+From 0xb017c9936f9271daff23d4c9876651442958a80f To bZx ETH iToken For 0.000082354530187789  (WETH)
+Step: 6
+From bZx ETH iToken To bZx: Vault For 4,698.019801980198019822  (WETH)
+Step: 7
+From 0xb0200b0677dd825bb32b93d055ebb9dc3521db9d To bZx: Vault For 1,300  (WETH)
+Step: 8
+From bZx: Vault To 0xb017c9936f9271daff23d4c9876651442958a80f For 5,637.623762376237623786  (WETH)
+Step: 9
+From 0xb017c9936f9271daff23d4c9876651442958a80f To Kyber: Contract For 5,637.623762376237623786  (WETH)
+Step: 10
+From Kyber: Contract To Kyber: Reserve WETH For 5,637.623762376237623786  (WETH)
+Step: 11
+From Uniswap: WBTC To Kyber: Reserve Uniswap For 51.34557581 Wrapped BTC (WBTC)
+Step: 12
+From Kyber: Reserve Uniswap To Kyber: Contract For 51.3455758 Wrapped BTC (WBTC)
+Step: 13
+From Kyber: Contract To bZx: Vault For 51.3455758 Wrapped BTC (WBTC)
+Step: 14
+From 0x0000...0000 To bZx Exploiter 1 For 0.00985220984 ) 
+Step: 15
+From bZx Exploiter 1: Contract To Uniswap: WBTC For 112 Wrapped BTC (WBTC)
+Step: 16
+From bZx Exploiter 1: Contract To 0x0de0dd63d9fb65450339ef27577d4f39d095eb85 For 10,000.00000000001  (WETH)
+Step: 17
+From 0x0de0dd63d9fb65450339ef27577d4f39d095eb85 To dYdX: Solo Margin For 10,000.00000000001  (WETH)
+1/479
+Token Transfer: 1
+
+Token Transfer: 1
+Normal Transfer: 478

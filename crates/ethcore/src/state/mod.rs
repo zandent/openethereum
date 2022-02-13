@@ -40,7 +40,9 @@ use types::{
     basic_account::BasicAccount,
     receipt::{LegacyReceipt, TransactionOutcome, TypedReceipt},
     state_diff::StateDiff,
-    transaction::SignedTransaction,
+    transaction::{SignedTransaction, 
+        //UnverifiedTransaction,
+    },
 };
 
 use vm::EnvInfo;
@@ -56,11 +58,19 @@ use trie::{Recorder, Trie, TrieError};
 
 mod account;
 mod substate;
+/////////////////////////////
+// flash loan
+#[doc(hidden)]
+pub mod adversaryaccount;
+#[doc(hidden)]
+pub mod frontrunmacro;
 
 pub mod backend;
 
-pub use self::{account::Account, backend::Backend, substate::Substate};
-
+pub use self::{account::Account, backend::Backend, substate::Substate, adversaryaccount::AdversaryAccount};
+// flash loan
+//////////////////////////////
+ 
 /// Used to return information about an `State::apply` operation.
 pub struct ApplyOutcome<T, V> {
     /// The receipt for the applied transaction.
@@ -314,6 +324,17 @@ pub struct State<B> {
     checkpoints: RefCell<Vec<HashMap<Address, Option<AccountEntry>>>>,
     account_start_nonce: U256,
     factories: Factories,
+
+    /////////////////////////////
+    // flash loan
+    global_flash_loan_transaction_pool: RefCell<HashMap<Address, Vec<(H256, AdversaryAccount)>>>,
+    global_flash_loan_transaction_pool_checkpoints: RefCell<Vec<HashMap<Address, Vec<(H256, AdversaryAccount)>>>>,
+    current_flash_loan_sender_address: RefCell<Address>,
+    current_flash_loan_sender_address_checkpoints: RefCell<Vec<Address>>,
+    temp_created_addresses: RefCell<Vec<Address>>,
+    temp_created_addresses_checkpoints: RefCell<Vec<Vec<Address>>>,
+    // flash loan
+    //////////////////////////////
 }
 
 #[derive(Copy, Clone)]
@@ -384,9 +405,184 @@ impl<B: Backend> State<B> {
             checkpoints: RefCell::new(Vec::new()),
             account_start_nonce: account_start_nonce,
             factories: factories,
+            // flash loan
+            global_flash_loan_transaction_pool: Default::default(),
+            global_flash_loan_transaction_pool_checkpoints: Default::default(),
+            current_flash_loan_sender_address: Default::default(),
+            current_flash_loan_sender_address_checkpoints: Default::default(),
+            temp_created_addresses: Default::default(),
+            temp_created_addresses_checkpoints: Default::default(),
         }
     }
 
+    // flash loan
+    /// update adversary account
+    pub fn init_adversary_account_entry(
+        &mut self, 
+        addr: Address, 
+        tx: SignedTransaction, 
+        my_nonce: U256,
+    ) -> Option<usize> {
+        // println!("init adversary account entry for address: {:?}", addr);
+        //set current addr for current transaction
+        *self.current_flash_loan_sender_address.get_mut() = addr;
+        let (unverify_tx, _, _) = tx.clone().deconstruct();
+        let hash = unverify_tx.clone().hash();
+        let addr_nonce = unverify_tx.clone().as_unsigned().tx().nonce;
+        let tmp_pool = self.global_flash_loan_transaction_pool.borrow_mut();
+        match tmp_pool.get(&addr).map(|value| value) {
+            Some(val) => {
+                match val.into_iter().find(|x| x.0 == hash) {
+                    Some(_) => None,
+                    None => {
+                        let mut new_val = val.to_vec();
+                        new_val.push(
+                            (
+                                hash,
+                                AdversaryAccount::new(
+                                    addr_nonce, 
+                                    tx, 
+                                    my_nonce,
+                                )
+                            )
+                        );
+                        std::mem::drop(tmp_pool);
+                        self.global_flash_loan_transaction_pool.borrow_mut().insert(addr, new_val.to_vec());
+                        Some(new_val.len()-1)
+                    },
+                }
+            },
+            None => {
+                let mut new_val = Vec::new();
+                new_val.push(
+                    (
+                        hash,
+                        AdversaryAccount::new(
+                            addr_nonce, 
+                            tx, 
+                            my_nonce,
+                        )
+                    )                    
+                );
+                std::mem::drop(tmp_pool);
+                self.global_flash_loan_transaction_pool.borrow_mut().insert(addr, new_val);
+                Some(0)
+            }
+        }
+    }
+
+    /// update adversary account
+    pub fn rm_adversary_account_entry(&mut self, addr: Address, tx: SignedTransaction) {
+        //println!("remove adversary account entry for address: {:?}", addr);
+        let (unverify_tx, _, _) = tx.clone().deconstruct();
+        let hash = unverify_tx.clone().hash();
+        let tmp_pool = self.global_flash_loan_transaction_pool.borrow_mut();
+        match tmp_pool.get(&addr).map(|value| value) {
+            Some(val) => {
+                match val.into_iter().position(|x| x.0 == hash) {
+                    Some(idx) => {
+                        let mut new_val = val.to_vec();
+                        new_val.remove(idx);
+                        std::mem::drop(tmp_pool);
+                        if new_val.is_empty() {
+                            self.global_flash_loan_transaction_pool.borrow_mut().remove(&addr);
+                        }else{
+                            self.global_flash_loan_transaction_pool.borrow_mut().insert(addr, new_val);
+                        }
+                    },
+                    None => (),
+                }
+            },
+            None => (),
+        }
+    }
+
+    /// Set token flow by two addresses
+    pub fn set_token_flow_in_current_transaction(
+        &self, 
+        _sender: Address, 
+        addrfrom: Address, 
+        addrto: Address, 
+        amt: U256,
+        token_addr: Address,
+    ) -> Option<U256> {
+        debug!("msg.sender {:?} addrfrom {:?} addrto {:?} amt {:?} token_addr {:?}", _sender, addrfrom, addrto, amt, token_addr);
+        let acutal_sender: Address = *self.current_flash_loan_sender_address.borrow_mut();
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&acutal_sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.set_token_flow(addrfrom, addrto, amt, token_addr)
+            },
+            None => None,
+        }
+    }    
+    /// check identify_beneficiary of each transfer instruction
+    pub fn identify_beneficiary(&self, sender: Address) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.identify_beneficiary()
+            },
+            None => None,
+        }
+    }
+    /// check identify_beneficiary of each transfer instruction
+    pub fn identify_victim(&self, sender: Address) -> Option<Vec<(Address, Vec<(Address, U256)>)>> {
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.identify_victim()
+            },
+            None => None,
+        }
+    }
+    /// check flash loan pattern
+    pub fn token_transfer_flash_loan_check (&self, sender: Address, assemable_new: bool) -> bool{
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.token_transfer_flash_loan_check(assemable_new)
+            },
+            None => false,
+        }        
+    }
+    /// get new transactions
+    pub fn get_new_transactions_copy (&self, sender: Address) -> Option<(Option<SignedTransaction>, Option<SignedTransaction>)>{
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.get_txs()
+            },
+            None => None,
+        }        
+    }
+    /// Set address if it is deployed transaction
+    pub fn set_old_tx_contract_address (&self, sender: Address, new_contract_addr: Address) -> bool{
+        //println!("Contract {:?} is being deployed", new_contract_addr);
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.set_old_tx_contract_address(new_contract_addr)
+            },
+            None => false,
+        }        
+    }
+    /// Store temporay contract address
+    pub fn store_contract_address (&self, new_contract_addr: Address) {
+        self.temp_created_addresses.borrow_mut().push(new_contract_addr);
+    }
+    ///clear all records of contract addresses
+    pub fn clear_contract_address (&mut self) {
+        self.temp_created_addresses = Default::default();
+    }
+    ///get temp_created_addresses
+    pub fn get_temp_created_addresses(&self) -> Vec<Address> {
+        self.temp_created_addresses.borrow().clone()
+    }
+    // /// The function is used for the case where some deployed contract is created by opcode 'create' rather than Action::Create
+    // /// The contract address should be created afte executing the first tx
+    // pub fn overwrite_new_tx(&self, sender: Address, overwrite_contract_address: Address){
+    //     match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+    //         Some(val) => {
+    //             val.last().unwrap().1.overwrite_new_tx(overwrite_contract_address);
+    //         },
+    //         None => (),
+    //     }
+    // }
     /// Creates new state with existing state root
     pub fn from_existing(
         db: B,
@@ -405,6 +601,14 @@ impl<B: Backend> State<B> {
             checkpoints: RefCell::new(Vec::new()),
             account_start_nonce: account_start_nonce,
             factories: factories,
+            // flash loan
+            //TODO: clone or copy trait
+            global_flash_loan_transaction_pool: Default::default(),
+            global_flash_loan_transaction_pool_checkpoints: Default::default(),
+            current_flash_loan_sender_address: Default::default(),
+            current_flash_loan_sender_address_checkpoints: Default::default(),
+            temp_created_addresses: Default::default(),
+            temp_created_addresses_checkpoints: Default::default(),
         };
 
         Ok(state)
@@ -417,6 +621,12 @@ impl<B: Backend> State<B> {
 
     /// Create a recoverable checkpoint of this state. Return the checkpoint index.
     pub fn checkpoint(&mut self) -> usize {
+        // flash loan
+        self.global_flash_loan_transaction_pool_checkpoints
+            .get_mut()
+            .push(self.global_flash_loan_transaction_pool.borrow_mut().clone());
+        self.current_flash_loan_sender_address_checkpoints.get_mut().push(self.current_flash_loan_sender_address.borrow_mut().clone());
+        self.temp_created_addresses_checkpoints.get_mut().push(self.temp_created_addresses.borrow_mut().clone());
         let checkpoints = self.checkpoints.get_mut();
         let index = checkpoints.len();
         checkpoints.push(HashMap::new());
@@ -428,6 +638,9 @@ impl<B: Backend> State<B> {
         // merge with previous checkpoint
         let last = self.checkpoints.get_mut().pop();
         if let Some(mut checkpoint) = last {
+            self.global_flash_loan_transaction_pool_checkpoints.get_mut().pop();
+            self.current_flash_loan_sender_address_checkpoints.get_mut().pop();
+            self.temp_created_addresses_checkpoints.get_mut().pop();
             if let Some(ref mut prev) = self.checkpoints.get_mut().last_mut() {
                 if prev.is_empty() {
                     **prev = checkpoint;
@@ -443,6 +656,14 @@ impl<B: Backend> State<B> {
     /// Revert to the last checkpoint and discard it.
     pub fn revert_to_checkpoint(&mut self) {
         if let Some(mut checkpoint) = self.checkpoints.get_mut().pop() {
+            let flash_loan_checkpoint = self.global_flash_loan_transaction_pool_checkpoints.get_mut().pop().expect("There should be a flash loan account existing");
+            let flash_loan_checkpoint = RefCell::new(flash_loan_checkpoint);
+            self.global_flash_loan_transaction_pool = flash_loan_checkpoint;
+            let flash_loan_sender_addr_checkpoint = self.current_flash_loan_sender_address_checkpoints.get_mut().pop().expect("There should be a flash loan sender addr existing");
+            let flash_loan_sender_addr_checkpoint = RefCell::new(flash_loan_sender_addr_checkpoint);
+            let temp_created_addresses_checkpoint = self.temp_created_addresses_checkpoints.get_mut().pop().expect("There should be a created addr existing");
+            self.temp_created_addresses = RefCell::new(temp_created_addresses_checkpoint);
+            self.current_flash_loan_sender_address = flash_loan_sender_addr_checkpoint;
             for (k, v) in checkpoint.drain() {
                 match v {
                     Some(v) => {
@@ -1001,7 +1222,9 @@ impl<B: Backend> State<B> {
 
     /// t_nb 8.5.2 Commits our cached account changes into the trie.
     pub fn commit(&mut self) -> Result<(), Error> {
-        assert!(self.checkpoints.borrow().is_empty());
+        // flash loan comment it for store checkpoint
+        // assert!(self.checkpoints.borrow().is_empty());
+
         // first, commit the sub trees.
         let mut accounts = self.cache.borrow_mut();
         for (address, ref mut a) in accounts.iter_mut().filter(|&(_, ref a)| a.is_dirty()) {
@@ -1055,6 +1278,12 @@ impl<B: Backend> State<B> {
     pub fn clear(&mut self) {
         assert!(self.checkpoints.borrow().is_empty());
         self.cache.borrow_mut().clear();
+        assert!(self.global_flash_loan_transaction_pool_checkpoints.get_mut().is_empty());
+        self.global_flash_loan_transaction_pool.get_mut().clear();
+        assert!(self.current_flash_loan_sender_address_checkpoints.get_mut().is_empty());
+        *self.current_flash_loan_sender_address.get_mut() = Default::default();
+        assert!(self.temp_created_addresses_checkpoints.get_mut().is_empty());
+        *self.temp_created_addresses.get_mut() = Default::default();
     }
 
     /// Remove any touched empty or dust accounts.
@@ -1567,6 +1796,14 @@ impl Clone for State<StateDB> {
             checkpoints: RefCell::new(Vec::new()),
             account_start_nonce: self.account_start_nonce.clone(),
             factories: self.factories.clone(),
+            // flash loan
+            //TODO do clone() for adversaryaccount
+            global_flash_loan_transaction_pool: Default::default(),
+            global_flash_loan_transaction_pool_checkpoints: Default::default(),
+            current_flash_loan_sender_address: Default::default(),
+            current_flash_loan_sender_address_checkpoints: Default::default(),
+            temp_created_addresses: Default::default(),
+            temp_created_addresses_checkpoints: Default::default(),
         }
     }
 }

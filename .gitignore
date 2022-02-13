@@ -45,3 +45,5 @@ rls/
 
 # cargo remote artifacts
 remote-target
+
+contract_db/

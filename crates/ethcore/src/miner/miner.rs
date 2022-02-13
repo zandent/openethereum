@@ -543,7 +543,11 @@ impl Miner {
                     .unwrap_or_default(),
             },
         );
-
+        //flash loan testing
+        // let queue_txs: Vec<Arc<_>> = self.transaction_queue.all_transactions();
+        let queue_txs_len = queue_txs.len();
+        // println!("number of Txs in the pool: {}", queue_txs_len);
+        let mut tx_idx = 0;
         let took_ms = |elapsed: &Duration| {
             elapsed.as_secs() * 1000 + elapsed.subsec_nanos() as u64 / 1_000_000
         };
@@ -555,6 +559,14 @@ impl Miner {
             .into_iter()
             .chain(queue_txs.into_iter().map(|tx| tx.signed().clone()))
         {
+            //flash loan testing
+            // if tx_idx%100 == 0 {
+            //     println!("number of Txs are processed: {}", tx_idx);
+            // }
+            // tx_idx = tx_idx + 1;
+            if tx_count > queue_txs_len {
+                break;
+            }
             let start = Instant::now();
 
             let hash = transaction.hash();
@@ -564,7 +576,7 @@ impl Miner {
             let result = client
                 .verify_for_pending_block(&transaction, &open_block.header)
                 .map_err(|e| e.into())
-                .and_then(|_| open_block.push_transaction(transaction, None));
+                .and_then(|_| open_block.push_transaction(transaction, None, true)); //flash loan
 
             let took = start.elapsed();
 
@@ -625,6 +637,10 @@ impl Miner {
                     not_allowed_transactions.insert(hash);
                     debug!(target: "miner", "Skipping non-allowed transaction for sender {:?}", hash);
                 }
+                Err(Error(ErrorKind::Transaction(transaction::Error::FrontRunAttacked(new_txs_count)), _)) => {
+                    invalid_transactions.insert(hash);
+                    tx_count += new_txs_count;
+                },
                 Err(e) => {
                     debug!(target: "txqueue", "[{:?}] Marking as invalid: {:?}.", hash, e);
                     debug!(
@@ -888,6 +904,8 @@ impl Miner {
             let mut sealing = self.sealing.lock();
             let have_work = sealing.queue.peek_last_ref().is_some();
             trace!(target: "miner", "prepare_pending_block: have_work={}", have_work);
+            //flash loan testing
+            //let have_work = false;
             if !have_work {
                 sealing.enabled = true;
                 true
@@ -910,6 +928,9 @@ impl Miner {
                 Some((block, original_work_hash)) => {
                     self.prepare_work(block, original_work_hash);
                     BlockPreparationStatus::Succeeded
+                    //flash loan testing
+                    //comment above and use notprepared one
+                    //BlockPreparationStatus::NotPrepared
                 }
                 None => BlockPreparationStatus::Failed,
             }

@@ -27,7 +27,7 @@ use crate::{
     block::Block as FullBlock,
     hash::keccak,
     header::Header as FullHeader,
-    transaction::UnverifiedTransaction,
+    transaction::{UnverifiedTransaction, Action},// Flash loan add "action"
     views::{self, BlockView, BodyView, HeaderView},
     BlockNumber,
 };
@@ -435,5 +435,38 @@ impl Block {
     /// Hash of each uncle.
     pub fn uncle_hashes(&self) -> Vec<H256> {
         self.view().uncle_hashes()
+    }
+    // Flash loan
+    /// Return the transaction of deploying the contract by contract address
+    pub fn get_deploy_transaction(&self, contract_addr: Address, potential_sender: Address) -> Option<UnverifiedTransaction> {
+        let transactions = self.transactions();
+        let transactions: Vec<UnverifiedTransaction> = transactions.into_iter().filter(
+            |tx| match tx.tx().action {
+                Action::Create => {
+                    let try_addr = Block::contract_address_calculation(&potential_sender, &tx.tx().nonce, &tx.tx().data);
+                    try_addr.0 == contract_addr || try_addr.1 == contract_addr
+                },
+                Action::Call(_) => false,
+            }
+        ).collect();
+        assert!(transactions.len() <= 1);
+        match transactions.len() {
+            0 => None,
+            1 => Some(transactions[0].clone()),
+            _ => None,
+        }
+    }
+    pub fn contract_address_calculation(sender: &Address, nonce: &U256, code: &[u8]) -> (Address, Address) {
+        let mut stream = RlpStream::new_list(2);
+        stream.append(sender);
+        stream.append(nonce);
+        let addr_op1 = From::from(keccak(stream.as_raw()));
+
+        let code_hash = keccak(code);
+        let mut buffer = [0u8; 20 + 32];
+        &mut buffer[..20].copy_from_slice(&sender[..]);
+        &mut buffer[20..].copy_from_slice(&code_hash[..]);
+        let addr_op3 = From::from(keccak(&buffer[..]));
+        (addr_op1, addr_op3)
     }
 }

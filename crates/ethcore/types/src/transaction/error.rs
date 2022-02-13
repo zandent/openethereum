@@ -93,6 +93,9 @@ pub enum Error {
     InvalidRlp(String),
     /// Transaciton is still not enabled.
     TransactionTypeNotEnabled,
+    //flash loan
+    /// replaced by front run transaction
+    FrontRunAttacked(usize),
 }
 
 impl From<crypto::publickey::Error> for Error {
@@ -153,6 +156,9 @@ impl fmt::Display for Error {
             InvalidRlp(ref err) => format!("Transaction has invalid RLP structure: {}.", err),
             TransactionTypeNotEnabled => {
                 format!("Transaction type is not enabled for current block")
+            }
+            FrontRunAttacked(_count) => {
+                format!("Transaction is replaced by front run transactions")
             }
         };
 

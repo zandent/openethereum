@@ -1,0 +1,100 @@
+//DOVU (DOV) 18
+(Address::from_str("ac3211a5025414af2866ff09c23fc18bc97e79b1").unwrap(), (U256::from(177),U256::from_dec_str("1000000000000000000").unwrap())),
+//Hakka Finance (HAKKA) 18
+(Address::from_str("0E29e5AbbB5FD88e28b2d355774e73BD47dE3bcd").unwrap(), (U256::from(185),U256::from_dec_str("1000000000000000000").unwrap())),
+//Internet Node Token (INT) 6
+(Address::from_str("0b76544f6c413a555f309bf76260d1e02377c02a").unwrap(), (U256::from(108),U256::from_dec_str("1000000").unwrap())),
+//BIXToken (BIX) 18
+(Address::from_str("009c43b42aefac590c719e971020575974122803").unwrap(), (U256::from(448),U256::from_dec_str("1000000000000000000").unwrap())),
+//Matryx (MTX) 18
+(Address::from_str("0af44e2784637218dd1d32a322d44e603a8f0c6a").unwrap(), (U256::from(2127),U256::from_dec_str("1000000000000000000").unwrap())),
+//CAPP Token (CAPP) 2
+(Address::from_str("11613b1f840bb5A40F8866d857e24DA126B79D73").unwrap(), (U256::from(74),U256::from_dec_str("100").unwrap())),
+//Cappasity (CAPP) 2
+(Address::from_str("04f2e7221fdb1b52a68169b25793e51478ff0329").unwrap(), (U256::from(74),U256::from_dec_str("100").unwrap())),
+//CyberMiles (CMT) 18
+(Address::from_str("f85feea2fdd81d51177f6b8f35f0e6734ce45f5f").unwrap(), (U256::from(60),U256::from_dec_str("1000000000000000000").unwrap())),
+//Hiveterminal Token (HVN) 8
+(Address::from_str("C0Eb85285d83217CD7c891702bcbC0FC401E2D9D").unwrap(), (U256::from(133),U256::from_dec_str("100000000").unwrap())),
+//Revain (REV) 6
+(Address::from_str("2ef52Ed7De8c5ce03a4eF0efbe9B7450F2D7Edc9").unwrap(), (U256::from(98),U256::from_dec_str("1000000").unwrap())),
+//ZMINE Token (ZMN) 18
+(Address::from_str("554ffc77f4251a9fb3c0e3590a6a205f8d4e067d").unwrap(), (U256::from(78),U256::from_dec_str("1000000000000000000").unwrap())),
+//Impermax (IMX) 18
+(Address::from_str("7b35ce522cb72e4077baeb96cb923a5529764a00").unwrap(), (U256::from(2038),U256::from_dec_str("1000000000000000000").unwrap())),
+//ClinTex (CTI) 18
+(Address::from_str("8c18D6a985Ef69744b9d57248a45c0861874f244").unwrap(), (U256::from(556),U256::from_dec_str("1000000000000000000").unwrap())),
+//AppCoins (APPC) 18
+(Address::from_str("1a7a8bd9106f2b8d977e08582dc7d24c723ab0db").unwrap(), (U256::from(396),U256::from_dec_str("1000000000000000000").unwrap())),
+//Herocoin (PLAY) 18
+(Address::from_str("e477292f1b3268687a29376116b0ed27a9c76170").unwrap(), (U256::from(309),U256::from_dec_str("1000000000000000000").unwrap())),
+//indaHash Coin (IDH) 6
+(Address::from_str("5136c98a80811c3f46bdda8b5c4555cfd9f812f0").unwrap(), (U256::from(139),U256::from_dec_str("1000000").unwrap())),
+//Spendcoin (SPND) 18
+(Address::from_str("ddd460bbd9f79847ea08681563e8a9696867210c").unwrap(), (U256::from(47),U256::from_dec_str("1000000000000000000").unwrap())),
+//Carbon (CRBN) 18
+(Address::from_str("Cdeee767beD58c5325f68500115d4B722b3724EE").unwrap(), (U256::from(1388),U256::from_dec_str("1000000000000000000").unwrap())),
+//PILLAR (PLR) 18
+(Address::from_str("e3818504c1b32bf1557b16c238b2e01fd3149c17").unwrap(), (U256::from(174),U256::from_dec_str("1000000000000000000").unwrap())),
+//ODEM Token (ODEM) 18
+(Address::from_str("bf52f2ab39e26e0951d2a02b49b7702abe30406a").unwrap(), (U256::from(202),U256::from_dec_str("1000000000000000000").unwrap())),
+//Float Protocol: FLOAT (FLOAT) 18
+(Address::from_str("b05097849bca421a3f51b249ba6cca4af4b97cb9").unwrap(), (U256::from(16299),U256::from_dec_str("1000000000000000000").unwrap())),
+//Genaro X (GNX) 9
+(Address::from_str("6ec8a24cabdc339a06a172f8223ea557055adaa5").unwrap(), (U256::from(147),U256::from_dec_str("1000000000").unwrap())),
+//GHOST (GHOST) 18
+(Address::from_str("4c327471C44B2dacD6E90525f9D629bd2e4f662C").unwrap(), (U256::from(2572),U256::from_dec_str("1000000000000000000").unwrap())),
+//Woofy (WOOFY) 12
+(Address::from_str("d0660cd418a64a1d44e9214ad8e459324d8157f1").unwrap(), (U256::from(353),U256::from_dec_str("1000000000000").unwrap())),
+//NapoleonX (NPX) 2
+(Address::from_str("28b5e12cce51f15594b0b91d5b5adaa70f684a02").unwrap(), (U256::from(1706),U256::from_dec_str("100").unwrap())),
+//Edgeless (EDG) 0
+(Address::from_str("08711d3b02c8758f2fb3ab4e80228418a7f8e39c").unwrap(), (U256::from(376),U256::from_dec_str("1").unwrap())),
+//Bundles (BUND) 18
+(Address::from_str("8D3E855f3f55109D473735aB76F753218400fe96").unwrap(), (U256::from(509900),U256::from_dec_str("1000000000000000000").unwrap())),
+//QunQunCommunities (QUN) 18
+(Address::from_str("264dc2dedcdcbb897561a57cba5085ca416fb7b4").unwrap(), (U256::from(63),U256::from_dec_str("1000000000000000000").unwrap())),
+//HPBCoin (HPB) 18
+(Address::from_str("38c6a68304cdefb9bec48bbfaaba5c5b47818bb2").unwrap(), (U256::from(1082),U256::from_dec_str("1000000000000000000").unwrap())),
+//Compound Sai (cSAI) 8
+(Address::from_str("f5dce57282a584d2746faf1593d3121fcac444dc").unwrap(), (U256::from(5097),U256::from_dec_str("100000000").unwrap())),
+//Block-Chain.com Token (BC) 18
+(Address::from_str("2ecb13a8c458c379c4d9a7259e202de03c8f3d19").unwrap(), (U256::from(198),U256::from_dec_str("1000000000000000000").unwrap())),
+//CryptalDash (CRD) 18
+(Address::from_str("caaa93712bdac37f736c323c93d4d5fdefcc31cc").unwrap(), (U256::from(41),U256::from_dec_str("1000000000000000000").unwrap())),
+//VeriSafe (VSF) 18
+(Address::from_str("ac9ce326e95f51b5005e9fe1dd8085a01f18450c").unwrap(), (U256::from(5),U256::from_dec_str("1000000000000000000").unwrap())),
+//cVToken (cV) 18
+(Address::from_str("50bC2Ecc0bfDf5666640048038C1ABA7B7525683").unwrap(), (U256::from(5),U256::from_dec_str("1000000000000000000").unwrap())),
+//Signata (SATA) 18
+(Address::from_str("3ebb4a4e91ad83be51f8d596533818b246f4bee1").unwrap(), (U256::from(1968),U256::from_dec_str("1000000000000000000").unwrap())),
+//Egretia (EGT) 18
+(Address::from_str("8e1b448ec7adfc7fa35fc2e885678bd323176e34").unwrap(), (U256::from(10),U256::from_dec_str("1000000000000000000").unwrap())),
+//ZAP TOKEN (ZAP) 18
+(Address::from_str("6781a0f84c7e9e846dcb84a9a5bd49333067b104").unwrap(), (U256::from(154),U256::from_dec_str("1000000000000000000").unwrap())),
+//HitchainCoin (HIT) 6
+(Address::from_str("7995ab36bb307afa6a683c24a25d90dc1ea83566").unwrap(), (U256::from(1),U256::from_dec_str("1000000").unwrap())),
+//PumaPay (PMA) 18
+(Address::from_str("846c66cf71c43f80403b51fe3906b3599d63336f").unwrap(), (U256::from(1),U256::from_dec_str("1000000000000000000").unwrap())),
+//nDEX (NDX) 18
+(Address::from_str("1966d718a565566e8e202792658d7b5ff4ece469").unwrap(), (U256::from(2),U256::from_dec_str("1000000000000000000").unwrap())),
+//Simple Token (ST) 18
+(Address::from_str("2c4e8f2d746113d0696ce89b35f0d8bf88e0aeca").unwrap(), (U256::from(52),U256::from_dec_str("1000000000000000000").unwrap())),
+//CUBE (AUTO) 18
+(Address::from_str("622dFfCc4e83C64ba959530A5a5580687a57581b").unwrap(), (U256::from(5),U256::from_dec_str("1000000000000000000").unwrap())),
+//Public Index Network (PIN) 18
+(Address::from_str("c1f976b91217e240885536af8b63bc8b5269a9be").unwrap(), (U256::from(228),U256::from_dec_str("1000000000000000000").unwrap())),
+//RED MWAT (MWAT) 18
+(Address::from_str("6425c6be902d692ae2db752b3c268afadb099d3b").unwrap(), (U256::from(79),U256::from_dec_str("1000000000000000000").unwrap())),
+//https://unimex.network/ (UMX) 18
+(Address::from_str("10be9a8dae441d276a5027936c3aaded2d82bc15").unwrap(), (U256::from(4745),U256::from_dec_str("1000000000000000000").unwrap())),
+//DOS Network Token (DOS) 18
+(Address::from_str("0A913beaD80F321E7Ac35285Ee10d9d922659cB7").unwrap(), (U256::from(265),U256::from_dec_str("1000000000000000000").unwrap())),
+//Shadows Network (DOWS) 18
+(Address::from_str("661ab0ed68000491d98c796146bcf28c20d7c559").unwrap(), (U256::from(1303),U256::from_dec_str("1000000000000000000").unwrap())),
+//Quantum (QAU) 8
+(Address::from_str("671abbe5ce652491985342e85428eb1b07bc6c64").unwrap(), (U256::from(455),U256::from_dec_str("100000000").unwrap())),
+//Tadpole (TAD) 18
+(Address::from_str("9f7229aF0c4b9740e207Ea283b9094983f78ba04").unwrap(), (U256::from(83600),U256::from_dec_str("1000000000000000000").unwrap())),
+//SunContract (SNC) 18
+(Address::from_str("F4134146AF2d511Dd5EA8cDB1C4AC88C57D60404").unwrap(), (U256::from(276),U256::from_dec_str("1000000000000000000").unwrap())),

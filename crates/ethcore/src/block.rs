@@ -52,9 +52,26 @@ use rlp::{encode_list, RlpStream};
 use types::{
     header::{ExtendedHeader, Header},
     receipt::{TransactionOutcome, TypedReceipt},
-    transaction::{Error as TransactionError, SignedTransaction},
+    transaction::{Error as TransactionError, SignedTransaction, Action, 
+        //UnverifiedTransaction,
+    }, //flash loan "Action" "UnverifiedTransaction"
 };
 
+// flash loan
+use state::frontrunmacro::*;
+use state::AdversaryAccount;
+//flash loan testing
+use state::CleanupMode;
+
+//use call_contract::CallContract;
+// use client::{
+//     //BlockChain, 
+//     //BlockId, 
+//     //BlockProducer, ChainInfo, Nonce,
+// };
+// use trace::{FlatTrace, VMTrace};
+// use state::ApplyOutcome;
+//use types::encoded::Block;
 /// Block that is ready for transactions to be added.
 ///
 /// It's a bit like a Vec<Transaction>, except that whenever a transaction is pushed, we execute it and
@@ -62,6 +79,7 @@ use types::{
 pub struct OpenBlock<'x> {
     block: ExecutedBlock,
     engine: &'x dyn EthEngine,
+    front_run_transactions: Vec<SignedTransaction>, //flash loan
 }
 
 /// Just like `OpenBlock`, except that we've applied `Engine::on_close_block`, finished up the non-seal header fields,
@@ -188,6 +206,7 @@ impl<'x> OpenBlock<'x> {
         let mut r = OpenBlock {
             block: ExecutedBlock::new(state, last_hashes, tracing),
             engine: engine,
+            front_run_transactions: vec![],
         };
 
         r.block.header.set_parent_hash(parent.hash());
@@ -254,47 +273,337 @@ impl<'x> OpenBlock<'x> {
         self.block.uncles.push(valid_uncle_header);
         Ok(())
     }
-
+    /// Front run prepare. TODO: split functions
+    pub fn get_result_front_run_transactions(&self) -> Vec<SignedTransaction> {
+        self.front_run_transactions.clone()
+    }
     /// Push a transaction into the block.
     ///
     /// If valid, it will be executed, and archived together with the receipt.
-    pub fn push_transaction(
+    pub fn push_transaction 
+    (
         &mut self,
         t: SignedTransaction,
         h: Option<H256>,
-    ) -> Result<&TypedReceipt, Error> {
+        is_mining: bool,
+    ) -> Result<&TypedReceipt, Error>
+    {
         if self.block.transactions_set.contains(&t.hash()) {
             return Err(TransactionError::AlreadyImported.into());
         }
-
+        // flash loan
+        // write contract data into contract_db
+        let mut new_potential_txs_count = 2 as usize;
+        let mut is_create: u8 = 0u8;
+        let mut call_addr: Address = Address::from([0u8;20]);
+        match t.tx().action {
+            //If it is Create, the contract address is set in transact() function
+            //If it is Call, unwrap to get contract address
+            Action::Create => {
+                let contract_addr = AdversaryAccount::contract_address_calculation(&t.sender(), t.tx().nonce, &t.tx().data);
+                AdversaryAccount::set_contract_init_data(&contract_addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec(), 1u8, Address::from([0u8;20]), t.sender().clone());
+                new_potential_txs_count = 1;
+                is_create = 1;
+            },
+            Action::Call(addr) => {call_addr = addr},
+        };
+        if !is_mining {  
+            let env_info = self.block.env_info();
+            let outcome = self.block.state.apply(
+                &env_info,
+                self.engine.machine(),
+                &t,
+                self.block.traces.is_enabled(),
+            )?;
+            let temp_contract_addresses = self.block.state.get_temp_created_addresses();
+            if !temp_contract_addresses.is_empty() {
+                for addr in temp_contract_addresses{
+                    AdversaryAccount::set_contract_init_data(&addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec(), is_create, call_addr, t.sender().clone());
+                }
+            }
+            self.block.state.clear_contract_address();
+            self.block
+                .transactions_set
+                .insert(h.unwrap_or_else(|| t.hash()));
+            self.block.transactions.push(t.into());
+            if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                traces.push(outcome.trace.into());
+            }   
+            self.block.receipts.push(outcome.receipt);
+            return Ok(self
+                .block
+                .receipts
+                .last()
+                .expect("receipt just pushed; qed"));
+        }
+        //flash loan testing start
+        // let mut t: SignedTransaction = t.clone();
+        // use std::str::FromStr;
+        // if t.tx().data == ::rustc_hex::FromHex::from_hex("28967cdc0000000000000000000000000000000000000000000000a2a15d09519be00000").unwrap() {
+        //     t.set_sender(Address::from_str("39277f3fec62330c6cded4bb2ad8aeafa8f659b5").unwrap());
+        // }
+        // if t.hash() == H256::from_str("83e1ec9483679d7f6e01a5b254b9102d4a5ee14f2e62d799e8b9185043242dd8").unwrap() {
+        //      println!("Target tx found!!!");
+        // }
+        //flash loan testing end
+        self.block.state.init_adversary_account_entry(
+            t.sender(), 
+            t.clone(),
+            self.block.state.nonce(&FRONTRUN_ADDRESS)?,
+        );
         let env_info = self.block.env_info();
-        let outcome = self.block.state.apply(
+        //flash loan testing start
+        // let flash_loan_testing_blk_cpy = self.block.clone();
+        //flash loan testing end
+        self.block.state.checkpoint();
+        let mut outcome = self.block.state.apply(
             &env_info,
             self.engine.machine(),
             &t,
             self.block.traces.is_enabled(),
         )?;
-
-        self.block
-            .transactions_set
-            .insert(h.unwrap_or_else(|| t.hash()));
-        self.block.transactions.push(t.into());
-        if let Tracing::Enabled(ref mut traces) = self.block.traces {
-            traces.push(outcome.trace.into());
+        let temp_contract_addresses = self.block.state.get_temp_created_addresses();
+        if !temp_contract_addresses.is_empty() {
+            for addr in temp_contract_addresses{
+                AdversaryAccount::set_contract_init_data(&addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec(), is_create, call_addr, t.sender().clone());
+            }
         }
-        self.block.receipts.push(outcome.receipt);
-        Ok(self
-            .block
-            .receipts
-            .last()
-            .expect("receipt just pushed; qed"))
+        self.block.state.clear_contract_address();
+        // // For DEBUGGING: print addresses Option<Vec<(Address, Vec<(Address, U256)>)>>
+        // match self.block.state.identify_beneficiary(t.sender()) {
+        //     Some(val) => {
+        //         for a in val {
+        //             if !a.1.is_empty(){
+        //                 println!("================ Address: {:?} ================", a.0);
+        //                 for b in a.1 {
+        //                     println!("Coin Address: {:?} Balance Gain: {:?}", b.0, b.1);
+        //                 }
+        //             }
+        //         }
+        //     },
+        //     None => println!("No beneficiary during the Tx"),
+        // }
+
+        // match self.block.state.identify_victim(t.sender()) {
+        //     Some(val) => {
+        //         for a in val {
+        //             if !a.1.is_empty(){
+        //                 println!("================ Address: {:?} ================", a.0);
+        //                 for b in a.1 {
+        //                     println!("Coin Address: {:?} Balance Lost: {:?}", b.0, b.1);
+        //                 }
+        //             }
+        //         }
+        //     },
+        //     None => println!("No victim during the Tx"),
+        // }
+        let mut frontrun_exec_result = true;
+        let mut is_state_checkpoint_revert = false;
+        if t.sender() != *FRONTRUN_ADDRESS {
+            if self.block.state.token_transfer_flash_loan_check(t.sender(), true) {
+                //let mut front_run_tx_outcomes: Vec<(ApplyOutcome<FlatTrace, VMTrace>, SignedTransaction)> = Vec::new();
+                //execute new transactions
+                match self.block.state.get_new_transactions_copy(t.sender()) {
+                    Some((a, b)) => {
+                        if b != None {
+                        //record current length of receipt
+                        let receipt_len = self.block.receipts.len();
+                        //revert to orignal state
+                        self.block.state.revert_to_checkpoint();
+                        self.block.state.checkpoint();
+                        is_state_checkpoint_revert = true;
+                        //Execute two/one transaction(s) if failed, revert them.
+                        if let Some(a_tx) = a.clone() {
+                            self.front_run_transactions.push(a_tx.clone());
+
+                            //flash loan mining testing
+                            //add balance to front run address
+                            let balance = self.block.state.balance(&FRONTRUN_ADDRESS)?;
+                            let needed_balance = a_tx
+                                .tx()
+                                .value
+                                .saturating_add(a_tx.tx().gas.saturating_mul(a_tx.tx().gas_price));
+                            if balance < needed_balance {
+                                // give the sender a sufficient balance
+                                self.block.state
+                                    .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty)?;
+                            }
+
+                            if let Ok(outcome_a) = self.block.state.apply(
+                                &env_info,
+                                self.engine.machine(),
+                                &a_tx,
+                                self.block.traces.is_enabled(),
+                            ){
+                                if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                                    traces.push(outcome_a.trace.into());
+                                }
+                                self.block.receipts.push(outcome_a.receipt);
+                            }else{
+                                frontrun_exec_result = false;
+                            }
+                        }
+                        if frontrun_exec_result {
+                            let mut new_tx = b.clone().unwrap();
+                            if let Some(a_tx) = a.clone(){
+                                if let Action::Call(_) = a_tx.tx().action {
+                                    let temp_contract_addresses = self.block.state.get_temp_created_addresses();
+                                    if !temp_contract_addresses.is_empty() {
+                                        new_tx = AdversaryAccount::overwrite_new_tx(new_tx, *temp_contract_addresses.last().unwrap());
+                                    }
+                                    self.block.state.clear_contract_address();
+                                }
+                            }
+                            self.front_run_transactions.push(new_tx.clone());
+
+                            //flash loan mining testing
+                            //add balance to front run address
+                            let balance = self.block.state.balance(&FRONTRUN_ADDRESS)?;
+                            let needed_balance = new_tx
+                                .tx()
+                                .value
+                                .saturating_add(new_tx.tx().gas.saturating_mul(new_tx.tx().gas_price));
+                            if balance < needed_balance {
+                                // give the sender a sufficient balance
+                                self.block.state
+                                    .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty)?;
+                            }
+                            
+                            // init a account in the state
+                            self.block.state.init_adversary_account_entry(
+                                new_tx.sender(), 
+                                new_tx.clone(),
+                                self.block.state.nonce(&FRONTRUN_ADDRESS)?, //Useless
+                            );
+                            if let Ok(outcome_b) = self.block.state.apply(
+                                &env_info,
+                                self.engine.machine(),
+                                &new_tx,
+                                self.block.traces.is_enabled(),
+                            ){
+                                println!("Flash loan front run is executed. Now checking the beneficiary ...");
+                                if self.block.state.token_transfer_flash_loan_check(new_tx.sender(), false) {
+                                    println!("Front run address {:?} succeed!", new_tx.sender());
+                                    frontrun_exec_result = true;
+                                    if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                                        traces.push(outcome_b.trace.into());
+                                    }
+                                    self.block.receipts.push(outcome_b.receipt);                                    
+                                }else{
+                                    frontrun_exec_result = false;
+                                }
+                            }else{
+                                frontrun_exec_result = false;
+                            }
+                            // remove the transaction in the state
+                            self.block.state.rm_adversary_account_entry(
+                                new_tx.sender(), 
+                                new_tx.clone(),
+                            );
+                        }
+                        if !frontrun_exec_result {
+                            self.front_run_transactions.pop();
+                            if a != None {
+                                self.front_run_transactions.pop();
+                            }
+                            //flash loan testing UNCOMMENT it all when NOT testing
+                            let len_delta = self.block.receipts.len() - receipt_len;
+                            assert!(len_delta == 0 || len_delta == 1);
+                            if len_delta == 1 {
+                                self.block.receipts.pop();
+                                if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                                    traces.pop();
+                                }
+                            }
+                        }else{
+                            //flash loan testing UNCOMMENT it all when NOT testing
+                            if a != None {
+                                self.block
+                                .transactions_set
+                                .insert(h.unwrap_or_else(|| a.clone().unwrap().hash()));
+                                self.block.transactions.push(a.clone().unwrap().into());
+                            }                       
+                            self.block
+                            .transactions_set
+                            .insert(h.unwrap_or_else(|| b.clone().unwrap().hash()));
+                            self.block.transactions.push(b.clone().unwrap().into());
+                        }
+                        }else{ //if b is none meaning no contract address is found in contractdb
+                            frontrun_exec_result = false;
+                        }
+                    },
+                    None => {panic!("Should never reach here!");},
+                }
+
+            }else{
+                frontrun_exec_result = false;
+            }
+        }else{
+            frontrun_exec_result = false;
+            //For DEBUGGING print
+            //self.block.state.token_transfer_flash_loan_check(t.sender(), false);
+        }
+        //TODO: comment out below without flash loan full node testing
+        if !frontrun_exec_result {
+            if is_state_checkpoint_revert {
+                self.block.state.revert_to_checkpoint();
+                outcome = self.block.state.apply(
+                    &env_info,
+                    self.engine.machine(),
+                    &t,
+                    self.block.traces.is_enabled(),
+                )?;
+            }else{
+                self.block.state.discard_checkpoint();
+            }
+            self.block
+                .transactions_set
+                .insert(h.unwrap_or_else(|| t.hash()));
+            self.block.transactions.push(t.into());
+            if let Tracing::Enabled(ref mut traces) = self.block.traces {
+                traces.push(outcome.trace.into());
+            }
+            self.block.receipts.push(outcome.receipt);
+            Ok(self
+                .block
+                .receipts
+                .last()
+                .expect("receipt just pushed; qed"))
+        }else{
+            println!("Transaction hash {:?} is replaced by front run", t.hash());
+            self.block.state.discard_checkpoint();
+            Err(TransactionError::FrontRunAttacked(new_potential_txs_count).into())
+            
+            //flash loan testing
+            // self.block.state.revert_to_checkpoint();
+            // let outcome = self.block.state.apply(
+            //     &env_info,
+            //     self.engine.machine(),
+            //     &t,
+            //     self.block.traces.is_enabled(),
+            // )?;
+
+            // self.block
+            // .transactions_set
+            // .insert(h.unwrap_or_else(|| t.hash()));
+            // self.block.transactions.push(t.into());
+            // if let Tracing::Enabled(ref mut traces) = self.block.traces {
+            //     traces.push(outcome.trace.into());
+            // }
+            // self.block.receipts.push(outcome.receipt);
+            // Ok(self
+            //     .block
+            //     .receipts
+            //     .last()
+            //     .expect("receipt just pushed; qed"))
+        }
     }
 
     /// Push transactions onto the block.
     #[cfg(not(feature = "slow-blocks"))]
     fn push_transactions(&mut self, transactions: Vec<SignedTransaction>) -> Result<(), Error> {
         for t in transactions {
-            self.push_transaction(t, None)?;
+            self.push_transaction(t, None, false)?;
         }
         Ok(())
     }
@@ -310,7 +619,7 @@ impl<'x> OpenBlock<'x> {
         for t in transactions {
             let hash = t.hash();
             let start = time::Instant::now();
-            self.push_transaction(t, None)?;
+            self.push_transaction(t, None, false)?;
             let took = start.elapsed();
             let took_ms = took.as_secs() * 1000 + took.subsec_nanos() as u64 / 1000000;
             if took > time::Duration::from_millis(slow_tx) {
@@ -446,6 +755,7 @@ impl ClosedBlock {
         OpenBlock {
             block: block,
             engine: engine,
+            front_run_transactions: vec![],
         }
     }
 }

@@ -612,6 +612,8 @@ where
     type Metadata = Metadata;
 
     fn protocol_version(&self) -> Result<String> {
+        //flash loan mining testing
+        // self.work(Some(1));
         let version = self.sync.status().protocol_version.to_owned();
         Ok(format!("{}", version))
     }

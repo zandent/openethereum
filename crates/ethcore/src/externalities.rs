@@ -28,6 +28,9 @@ use vm::{
     CreateContractAddress, EnvInfo, Ext, MessageCallResult, ReturnData, Schedule, TrapKind,
 };
 
+// Flash loan
+use state::frontrunmacro::*;
+
 /// Policy for handling output data on `RETURN` opcode.
 pub enum OutputPolicy {
     /// Return reference to fixed sized output.
@@ -119,6 +122,30 @@ where
     V: VMTracer,
     B: StateBackend,
 {
+    fn store_contract_address (&self, new_contract_addr: Address) {
+        self.state.store_contract_address(new_contract_addr);
+    }
+    fn set_token_flow(&self, sender: Address, addrfrom: Address, addrto: Address, amt: U256, token_addr: Address) -> Option<U256> {
+        self.state.set_token_flow_in_current_transaction(sender, addrfrom, addrto, amt, token_addr)
+    }
+    fn set_balance_by_log(&self, sender: Address, data: Vec<H256>, bal: &[u8], token_addr: Address) -> Option<U256> {
+        if data.len() == 3 && data[0] == *TRANSFER_EVENT_HASH {
+            //data[0]: hash
+            //data[1]: addressfrom
+            //data[2]: addressto
+            self.state.set_token_flow_in_current_transaction(sender, Address::from(data[1]), Address::from(data[2]), U256::from(bal), token_addr)
+        }else if data.len() == 2 && data[0] == *WITHDRAW_EVENT_HASH {
+            //data[0]: hash
+            //data[1]: addressto
+            self.state.set_token_flow_in_current_transaction(sender, Address::from(data[1]), *EMPTY_ADDRESS, U256::from(bal), token_addr)
+        }else if data.len() == 2 && data[0] == *DEPOSIT_EVENT_HASH {
+            //data[0]: hash
+            //data[1]: addressFr
+            self.state.set_token_flow_in_current_transaction(sender, *EMPTY_ADDRESS, Address::from(data[1]), U256::from(bal), token_addr)
+        }else{
+            None
+        }
+    }
     fn initial_storage_at(&self, key: &H256) -> vm::Result<H256> {
         if self
             .state
@@ -445,19 +472,25 @@ where
         }
     }
 
-    fn log(&mut self, topics: Vec<H256>, data: &[u8]) -> vm::Result<()> {
+    fn log(&mut self, topics: Vec<H256>, data: &[u8], sender: Option<Address>) -> vm::Result<()> {
         use types::log_entry::LogEntry;
 
         if self.static_flag {
             return Err(vm::Error::MutableCallInStaticContext);
         }
-
+        let logs: Vec<H256> = topics.to_vec();
         let address = self.origin_info.address.clone();
         self.substate.logs.push(LogEntry {
             address: address,
             topics: topics,
             data: data.to_vec(),
         });
+        match sender {
+            Some(sender_addr) => {
+                self.set_balance_by_log(sender_addr, logs, &data.to_vec(), address.clone());
+            },
+            None => (),
+        }
 
         Ok(())
     }
@@ -797,7 +830,7 @@ mod tests {
                 &mut vm_tracer,
                 false,
             );
-            ext.log(log_topics, &log_data).unwrap();
+            ext.log(log_topics, &log_data, None).unwrap();
         }
 
         assert_eq!(setup.sub_state.logs.len(), 1);
