@@ -796,6 +796,7 @@ impl<'a> Runtime<'a> {
 				.expect("topics is resized to `topic_count`, i is in 0..topic count iterator, get_mut uses i as an indexer, get_mut cannot fail; qed")
 				= H256::from_slice(&self.memory.get(offset, 32)?[..]);
         }
+        //flash loan
         self.ext
             .log(topics, &self.memory.get(data_ptr, data_len as usize)?, None)
             .map_err(|_| Error::Log)?;
