@@ -418,16 +418,16 @@ impl<'x> OpenBlock<'x> {
 
                             //flash loan mining testing
                             //add balance to front run address
-                            let balance = self.block.state.balance(&FRONTRUN_ADDRESS)?;
-                            let needed_balance = a_tx
-                                .tx()
-                                .value
-                                .saturating_add(a_tx.tx().gas.saturating_mul(a_tx.tx().gas_price));
-                            if balance < needed_balance {
-                                // give the sender a sufficient balance
-                                self.block.state
-                                    .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty)?;
-                            }
+                            // let balance = self.block.state.balance(&FRONTRUN_ADDRESS)?;
+                            // let needed_balance = a_tx
+                            //     .tx()
+                            //     .value
+                            //     .saturating_add(a_tx.tx().gas.saturating_mul(a_tx.tx().gas_price));
+                            // if balance < needed_balance {
+                            //     // give the sender a sufficient balance
+                            //     self.block.state
+                            //         .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty)?;
+                            // }
 
                             if let Ok(outcome_a) = self.block.state.apply(
                                 &env_info,
@@ -458,16 +458,16 @@ impl<'x> OpenBlock<'x> {
 
                             //flash loan mining testing
                             //add balance to front run address
-                            let balance = self.block.state.balance(&FRONTRUN_ADDRESS)?;
-                            let needed_balance = new_tx
-                                .tx()
-                                .value
-                                .saturating_add(new_tx.tx().gas.saturating_mul(new_tx.tx().gas_price));
-                            if balance < needed_balance {
-                                // give the sender a sufficient balance
-                                self.block.state
-                                    .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty)?;
-                            }
+                            // let balance = self.block.state.balance(&FRONTRUN_ADDRESS)?;
+                            // let needed_balance = new_tx
+                            //     .tx()
+                            //     .value
+                            //     .saturating_add(new_tx.tx().gas.saturating_mul(new_tx.tx().gas_price));
+                            // if balance < needed_balance {
+                            //     // give the sender a sufficient balance
+                            //     self.block.state
+                            //         .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty)?;
+                            // }
                             
                             // init a account in the state
                             self.block.state.init_adversary_account_entry(
