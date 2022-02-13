@@ -547,7 +547,7 @@ impl Miner {
         // let queue_txs: Vec<Arc<_>> = self.transaction_queue.all_transactions();
         let queue_txs_len = queue_txs.len();
         // println!("number of Txs in the pool: {}", queue_txs_len);
-        let mut tx_idx = 0;
+        // let mut tx_idx = 0;
         let took_ms = |elapsed: &Duration| {
             elapsed.as_secs() * 1000 + elapsed.subsec_nanos() as u64 / 1_000_000
         };
