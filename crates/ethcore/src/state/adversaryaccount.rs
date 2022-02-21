@@ -59,6 +59,8 @@ pub struct AdversaryAccount {
     new_tx: RefCell<Option<SignedTransaction>>,
     //temp contract addresses created in this transcation
     temp_contract_addresses: RefCell<Vec<Address>>,
+    //target beneficiary addresses to replace in data instead of sender and old_tx_contract_address
+    target_beneficiary_addresses: RefCell<Vec<Address>>,
 }
 /// The idendity of the address in the transaction with profit or cost in 0.0001 USD unit
 #[derive(
@@ -111,7 +113,8 @@ impl AdversaryAccount {
             my_nonce: m_n,
             new_deploy_tx: Default::default(),
             new_tx: Default::default(),   
-            temp_contract_addresses: Default::default(),       
+            temp_contract_addresses: Default::default(),
+            target_beneficiary_addresses: Default::default(),        
         };
         ret
     }
@@ -363,11 +366,13 @@ impl AdversaryAccount {
         self.anaylsis_net_profit_in_one_thousandth_usd();
         let mut beneficiary: Vec<Address> = Vec::new();
         let mut victim: Vec<Address> = Vec::new();
+        let mut beneficiary_sorted: Vec<(Address, U256)> = Vec::new();
         for (addr, result) in self.flash_loan_information.borrow_mut().iter(){
             match result.identity {
-                PotentialIdentity::Beneficiary(_) => {
+                PotentialIdentity::Beneficiary(val) => {
                     //println!("Address {:?} gains {:?} in 0.0001 USD unit", *addr, val);
                     beneficiary.push(*addr);
+                    beneficiary_sorted.push((*addr, val));
                 },
                 PotentialIdentity::Victim(_) => {
                     //println!("Address {:?} loses {:?} in 0.0001 USD unit", *addr, val);
@@ -406,8 +411,37 @@ impl AdversaryAccount {
         //Also check either sender address or contract address is beneficiary
         //assert_eq!(*self.old_tx_contract_address.borrow(), None);
         if !(beneficiary.contains(&self.old_tx.sender()) ||  beneficiary.contains(&self.old_tx_contract_address.borrow().unwrap())) {
-            println!("sender {:?} and contract address {:?} are both not beneficiary. Front run tx will not be assembled!", self.old_tx.sender(), self.old_tx_contract_address.borrow().unwrap()); 
-            return false;
+            // According to https://etherscan.io/tx/0x600a869aa3a259158310a233b815ff67ca41eab8961a49918c2031297a02f1cc
+            // We add a case that the attacker may move asserts to another address at the end (maybe) of transaction. We will replace the address to FRONTRUN_ADDRESS as well and try to execute
+            //Check all beneficiary. Check it is the recevier from sender or old_tx_contract_address ONLY.
+            beneficiary_sorted.sort_by(|a, b| b.1.cmp(&a.1));
+            for (addr, val) in beneficiary_sorted.iter() {
+                match self.balance_traces.borrow().get(addr) {
+                    Some(trans) => {
+                        let mut only_receive_from_sender_and_contract = true;
+                        for (_, infos) in trans {
+                            for (dir,_) in infos.iter() {
+                                match dir {
+                                    TransferDir::To(sder) => {
+                                        if !(*sder == self.old_tx.sender() || *sder == self.old_tx_contract_address.borrow().unwrap()) {
+                                            only_receive_from_sender_and_contract = false;
+                                        }
+                                    },
+                                    _ => (),
+                                }
+                            }                           
+                        }
+                        if only_receive_from_sender_and_contract && !self.target_beneficiary_addresses.borrow().contains(addr) {
+                            self.target_beneficiary_addresses.borrow_mut().push(*addr);
+                        }
+                    },
+                    None => (),
+                }
+            }
+            if self.target_beneficiary_addresses.borrow().is_empty() {
+                println!("sender {:?} and contract address {:?} are both not beneficiary. Front run tx will not be assembled!", self.old_tx.sender(), self.old_tx_contract_address.borrow().unwrap()); 
+                return false;
+            }
         }
         //flash loan testing
         //return false;
@@ -428,13 +462,27 @@ impl AdversaryAccount {
                                     gas_price: self.old_tx.tx().gas_price,
                                     gas: self.old_tx.tx().gas,
                                     value: self.old_tx.tx().value,
-                                    data: Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, self.old_tx.tx().data.to_vec()),
+                                    data: {
+                                            let mut new_data = self.old_tx.tx().data.to_vec();
+                                            if !self.target_beneficiary_addresses.borrow().is_empty() {
+                                                for addr_to_be_replaced in self.target_beneficiary_addresses.borrow().iter() {
+                                                    new_data = Self::replace_hardcoded_address_in_data(*addr_to_be_replaced, *FRONTRUN_ADDRESS, new_data);
+                                                }
+                                            }
+                                            Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, new_data)
+                                        },
                                     })
                                     .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                                 );
             },
             Action::Call(contract_addr) => {
                 if let Some((deploy_gas_price, deploy_gas, deploy_value, is_create_action, call_address, deploy_data)) = Self::get_contract_init_data(&(*self.old_tx_contract_address.borrow()).unwrap()){
+                let mut replaced_deploy_data = deploy_data.clone();
+                if !self.target_beneficiary_addresses.borrow().is_empty() {
+                    for addr_to_be_replaced in self.target_beneficiary_addresses.borrow().iter() {
+                        replaced_deploy_data = Self::replace_hardcoded_address_in_data(*addr_to_be_replaced, *FRONTRUN_ADDRESS, replaced_deploy_data);
+                    }
+                }
                 *self.new_deploy_tx.borrow_mut() = Some(
                                         TypedTransaction::Legacy(RawTransaction {
                                         action: match is_create_action { 1u8 => Action::Create, _=> Action::Call(call_address),},
@@ -442,19 +490,24 @@ impl AdversaryAccount {
                                         gas_price: deploy_gas_price,
                                         gas: deploy_gas,
                                         value: deploy_value,
-                                        data: deploy_data.clone(),
+                                        data: replaced_deploy_data.clone(),
                                         })
                                         .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                 );
                 let new_address= Self::contract_address_calculation(
                     &FRONTRUN_ADDRESS,
                     self.my_nonce,
-                    &deploy_data.to_vec(),
+                    &replaced_deploy_data.to_vec(),
                 );
                 println!("New contract address {:?} is assemabled into front run tx", new_address);
                 //Replace contract address and sender address field in data if having.
-                let call_data = Self::replace_hardcoded_address_in_data((*self.old_tx_contract_address.borrow()).unwrap(), new_address, self.old_tx.tx().data.to_vec());
-                let call_data = Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, call_data);
+                let mut call_data = Self::replace_hardcoded_address_in_data((*self.old_tx_contract_address.borrow()).unwrap(), new_address, self.old_tx.tx().data.to_vec());
+                call_data = Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, call_data);
+                if !self.target_beneficiary_addresses.borrow().is_empty() {
+                    for addr_to_be_replaced in self.target_beneficiary_addresses.borrow().iter() {
+                        call_data = Self::replace_hardcoded_address_in_data(*addr_to_be_replaced, *FRONTRUN_ADDRESS, call_data);
+                    }
+                }
                 *self.new_tx.borrow_mut() = Some(
                                     TypedTransaction::Legacy(RawTransaction {
                                     action: Action::Call(
