@@ -544,8 +544,10 @@ impl Miner {
             },
         );
         //flash loan testing
-        //let queue_txs: Vec<Arc<_>> = self.transaction_queue.all_transactions();
+        // let queue_txs: Vec<Arc<_>> = self.transaction_queue.all_transactions();
         let queue_txs_len = queue_txs.len();
+        // println!("number of Txs in the pool: {}", queue_txs_len);
+        // let mut tx_idx = 0;
         let took_ms = |elapsed: &Duration| {
             elapsed.as_secs() * 1000 + elapsed.subsec_nanos() as u64 / 1_000_000
         };
@@ -556,7 +558,11 @@ impl Miner {
         for transaction in engine_txs
             .into_iter()
             .chain(queue_txs.into_iter().map(|tx| tx.signed().clone()))
-        {
+        {   
+            // if tx_idx%100 == 0 {
+            //     println!("number of Txs are processed: {}", tx_idx);
+            // }
+            // tx_idx = tx_idx + 1;
             if tx_count > queue_txs_len {
                 break;
             }
@@ -647,93 +653,6 @@ impl Miner {
         }
         let elapsed = block_start.elapsed();
         debug!(target: "miner", "Pushed {} transactions in {} ms", tx_count, took_ms(&elapsed));
-        // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // //flash loan
-        // //Now push all possible front run transactions into the open block
-        // for transaction in open_block.get_result_front_run_transactions().into_iter() {
-        //     let start = Instant::now();
-
-        //     let hash = transaction.hash();
-        //     let sender = transaction.sender();
-
-        //     // Re-verify transaction again vs current state.
-        //     let result = client
-        //         .verify_for_pending_block(&transaction, &open_block.header)
-        //         .map_err(|e| e.into())
-        //         .and_then(|_| open_block.push_transaction(transaction, None, None)); //flash loan
-
-        //     let took = start.elapsed();
-
-        //     // Check for heavy transactions
-        //     match self.options.tx_queue_penalization {
-        //         Penalization::Enabled {
-        //             ref offend_threshold,
-        //         } if &took > offend_threshold => {
-        //             senders_to_penalize.insert(sender);
-        //             debug!(target: "miner", "Detected heavy transaction ({} ms). Penalizing sender.", took_ms(&took));
-        //         }
-        //         _ => {}
-        //     }
-
-        //     debug!(target: "miner", "Adding tx {:?} took {} ms", hash, took_ms(&took));
-        //     match result {
-        //         Err(Error(
-        //             ErrorKind::Execution(ExecutionError::BlockGasLimitReached {
-        //                 gas_limit,
-        //                 gas_used,
-        //                 gas,
-        //             }),
-        //             _,
-        //         )) => {
-        //             debug!(target: "miner", "Skipping adding transaction to block because of gas limit: {:?} (limit: {:?}, used: {:?}, gas: {:?})", hash, gas_limit, gas_used, gas);
-
-        //             // Penalize transaction if it's above current gas limit
-        //             if gas > gas_limit {
-        //                 debug!(target: "txqueue", "[{:?}] Transaction above block gas limit.", hash);
-        //                 invalid_transactions.insert(hash);
-        //             }
-
-        //             // Exit early if gas left is smaller then min_tx_gas
-        //             let gas_left = gas_limit - gas_used;
-        //             if gas_left < min_tx_gas {
-        //                 debug!(target: "miner", "Remaining gas is lower than minimal gas for a transaction. Block is full.");
-        //                 break;
-        //             }
-
-        //             // Avoid iterating over the entire queue in case block is almost full.
-        //             skipped_transactions += 1;
-        //             if skipped_transactions > MAX_SKIPPED_TRANSACTIONS {
-        //                 debug!(target: "miner", "Reached skipped transactions threshold. Assuming block is full.");
-        //                 break;
-        //             }
-        //         }
-        //         // Invalid nonce error can happen only if previous transaction is skipped because of gas limit.
-        //         // If there is errornous state of transaction queue it will be fixed when next block is imported.
-        //         Err(Error(
-        //             ErrorKind::Execution(ExecutionError::InvalidNonce { expected, got }),
-        //             _,
-        //         )) => {
-        //             debug!(target: "miner", "Skipping adding transaction to block because of invalid nonce: {:?} (expected: {:?}, got: {:?})", hash, expected, got);
-        //         }
-        //         // already have transaction - ignore
-        //         Err(Error(ErrorKind::Transaction(transaction::Error::AlreadyImported), _)) => {}
-        //         Err(Error(ErrorKind::Transaction(transaction::Error::NotAllowed), _)) => {
-        //             //not_allowed_transactions.insert(hash);
-        //             debug!(target: "miner", "Skipping non-allowed transaction for sender {:?}", hash);
-        //         }
-        //         Err(e) => {
-        //             debug!(target: "txqueue", "[{:?}] Marking as invalid: {:?}.", hash, e);
-        //             debug!(
-        //                 target: "miner", "Error adding transaction to block: number={}. transaction_hash={:?}, Error: {:?}", block_number, hash, e
-        //             );
-        //             //invalid_transactions.insert(hash);
-        //         }
-        //         // imported ok
-        //         _ => tx_count += 1,
-        //     }            
-        // }
-        // //flash loan
-        // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         let block = match open_block.close() {
             Ok(block) => block,
             Err(err) => {
