@@ -270,7 +270,399 @@ pub fn prove_transaction_virtual<H: AsHashDB<KeccakHasher, DBValue> + Send + Syn
         Ok(res) => Some((res.output, state.drop().1.extract_proof())),
     }
 }
+// // flash loan archive testing
+// /// execte a transaction into the cloned block.
+// pub fn execute_transaction_virtual<H: AsHashDB<KeccakHasher, DBValue> + Send + Sync>
+// (
+//     db: H,
+//     root: H256,
+//     t: SignedTransaction,
+//     machine: &Machine,
+//     env_info: &EnvInfo,
+//     factories: Factories,
+// )
+// {
+//     use types::{
+//         transaction::{Action, 
+//             //UnverifiedTransaction,
+//         }, //flash loan "Action" "UnverifiedTransaction"
+//     }; 
+//     use self::frontrunmacro::FRONTRUN_ADDRESS;
+//     use self::backend::Proving;
+//     use std::time::{
+//         Duration, 
+//         Instant,
+//     };
 
+//     let backend = Proving::new(db);
+//     let res = State::from_existing(
+//         backend,
+//         root,
+//         machine.account_start_nonce(env_info.number),
+//         factories,
+//     );
+//     let mut state = res.ok().unwrap();
+//     // flash loan
+//     // write contract data into contract_db
+//     let mut new_potential_txs_count = 2 as usize;
+//     let mut is_create: u8 = 0u8;
+//     let mut call_addr: Address = Address::from([0u8;20]);
+//     match t.tx().action {
+//         //If it is Create, the contract address is set in transact() function
+//         //If it is Call, unwrap to get contract address
+//         Action::Create => {
+//             let contract_addr = AdversaryAccount::contract_address_calculation(&t.sender(), t.tx().nonce, &t.tx().data);
+//             AdversaryAccount::set_contract_init_data_with_init_call(&contract_addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec(), 1u8, Address::from([0u8;20]), t.sender().clone());
+//             new_potential_txs_count = 1;
+//             is_create = 1;
+//         },
+//         Action::Call(addr) => {call_addr = addr},
+//     };
+//     //flash loan testing start
+//     // let mut t: SignedTransaction = t.clone();
+//     // use std::str::FromStr;
+//     // if t.tx().data == ::rustc_hex::FromHex::from_hex("28967cdc0000000000000000000000000000000000000000000000a2a15d09519be00000").unwrap() {
+//     //     t.set_sender(Address::from_str("39277f3fec62330c6cded4bb2ad8aeafa8f659b5").unwrap());
+//     // }
+//     // if t.hash() == H256::from_str("83e1ec9483679d7f6e01a5b254b9102d4a5ee14f2e62d799e8b9185043242dd8").unwrap() {
+//     //      println!("Target tx found!!!");
+//     // }
+//     //flash loan testing end
+//     state.init_adversary_account_entry(
+//         t.sender(), 
+//         t.clone(),
+//         state.nonce(&FRONTRUN_ADDRESS).unwrap(),
+//     );
+
+//     //flash loan testing start
+//     // let flash_loan_testing_blk_cpy = self.block.clone();
+//     //flash loan testing end
+//     state.checkpoint();
+//     let cp1 = Instant::now();
+//     let options = TransactOptions::with_no_tracing()
+//         .dont_check_nonce()
+//         .save_output_from_contract();
+//     let mut outcome = state.execute(env_info, machine, &t, options, false).unwrap();
+//     println!("Original tx took {:?}", cp1.elapsed());
+//     let cp2 = Instant::now();
+//     let temp_contract_addresses = state.get_temp_created_addresses();
+//     if !temp_contract_addresses.is_empty() {
+//         for addr in temp_contract_addresses{
+//             AdversaryAccount::set_contract_init_data_with_init_call(&addr, t.tx().gas_price, t.tx().gas, t.tx().value, t.tx().data.to_vec(), is_create, call_addr, t.sender().clone());
+//         }
+//     }
+//     state.clear_contract_address();
+//     // // For DEBUGGING: print addresses Option<Vec<(Address, Vec<(Address, U256)>)>>
+//     // match self.block.state.identify_beneficiary(t.sender()) {
+//     //     Some(val) => {
+//     //         for a in val {
+//     //             if !a.1.is_empty(){
+//     //                 println!("================ Address: {:?} ================", a.0);
+//     //                 for b in a.1 {
+//     //                     println!("Coin Address: {:?} Balance Gain: {:?}", b.0, b.1);
+//     //                 }
+//     //             }
+//     //         }
+//     //     },
+//     //     None => println!("No beneficiary during the Tx"),
+//     // }
+
+//     // match self.block.state.identify_victim(t.sender()) {
+//     //     Some(val) => {
+//     //         for a in val {
+//     //             if !a.1.is_empty(){
+//     //                 println!("================ Address: {:?} ================", a.0);
+//     //                 for b in a.1 {
+//     //                     println!("Coin Address: {:?} Balance Lost: {:?}", b.0, b.1);
+//     //                 }
+//     //             }
+//     //         }
+//     //     },
+//     //     None => println!("No victim during the Tx"),
+//     // }
+//     let mut frontrun_exec_result = true;
+//     let mut is_state_checkpoint_revert = false;
+//     if t.sender() != *FRONTRUN_ADDRESS {
+//         if state.token_transfer_flash_loan_check(t.sender(), true) {
+//             //let mut front_run_tx_outcomes: Vec<(ApplyOutcome<FlatTrace, VMTrace>, SignedTransaction)> = Vec::new();
+//             //execute new transactions
+//             match state.get_new_transactions_copy_init_call(t.sender()) {
+//                 Some((a, b, c)) => {
+//                     if b != None {
+//                     //revert to orignal state
+//                     state.revert_to_checkpoint();
+//                     state.checkpoint();
+//                     is_state_checkpoint_revert = true;
+//                     //Execute two/one transaction(s) if failed, revert them.
+//                     if let Some(a_tx) = a.clone() {
+
+//                         //flash loan mining testing
+//                         //add balance to front run address
+//                         let balance = state.balance(&FRONTRUN_ADDRESS).unwrap();
+//                         let needed_balance = a_tx
+//                             .tx()
+//                             .value
+//                             .saturating_add(a_tx.tx().gas.saturating_mul(a_tx.tx().gas_price));
+//                         if balance < needed_balance {
+//                             // give the sender a sufficient balance
+//                             state
+//                                 .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty).unwrap();
+//                         }
+//                         let options = TransactOptions::with_no_tracing()
+//                         .dont_check_nonce()
+//                         .save_output_from_contract();
+//                         let cp4 = Instant::now();
+//                         if let Ok(outcome_a) = state.execute(env_info, machine, &a_tx, options, false){
+                            
+//                         }else{
+//                             frontrun_exec_result = false;
+//                         }
+//                         println!("New flash loan contract tx took {:?}", cp4.elapsed());
+//                     }
+//                     if frontrun_exec_result {
+//                         let mut new_tx = b.clone().unwrap();
+//                         if let Some(a_tx) = a.clone(){
+//                             if let Action::Call(_) = a_tx.tx().action {
+//                                 let temp_contract_addresses = state.get_temp_created_addresses();
+//                                 if !temp_contract_addresses.is_empty() {
+//                                     new_tx = AdversaryAccount::overwrite_new_tx(new_tx, *temp_contract_addresses.last().unwrap());
+//                                 }
+//                                 state.clear_contract_address();
+//                             }
+//                         }
+
+//                         //flash loan mining testing
+//                         //add balance to front run address
+//                         let balance = state.balance(&FRONTRUN_ADDRESS).unwrap();
+//                         let needed_balance = new_tx
+//                             .tx()
+//                             .value
+//                             .saturating_add(new_tx.tx().gas.saturating_mul(new_tx.tx().gas_price));
+//                         if balance < needed_balance {
+//                             // give the sender a sufficient balance
+//                             state
+//                                 .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty).unwrap();
+//                         }
+                        
+//                         // init a account in the state
+//                         state.init_adversary_account_entry(
+//                             new_tx.sender(), 
+//                             new_tx.clone(),
+//                             state.nonce(&FRONTRUN_ADDRESS).unwrap(), //Useless
+//                         );
+//                         let options = TransactOptions::with_no_tracing()
+//                             .dont_check_nonce()
+//                             .save_output_from_contract();
+//                         let cp3 = Instant::now();
+//                         if let Ok(outcome_b) = state.execute(env_info, machine, &new_tx, options, false){
+//                             println!("Flash loan front run is executed. Now checking the beneficiary ...");
+//                             if state.token_transfer_flash_loan_check(new_tx.sender(), false) {
+//                                 println!("Front run address {:?} succeed!", new_tx.sender());
+//                                 frontrun_exec_result = true;                                  
+//                             }else{
+//                                 frontrun_exec_result = false;
+//                             }
+//                         }else{
+//                             frontrun_exec_result = false;
+//                         }
+//                         println!("New flash loan front run tx took {:?}", cp3.elapsed());
+//                         // remove the transaction in the state
+//                         state.rm_adversary_account_entry(
+//                             new_tx.sender(), 
+//                             new_tx.clone(),
+//                         );
+//                     }
+//                     if !frontrun_exec_result {
+//                             // Now add init func call in the middle
+//                             println!("Now retry to execute with init func call ...");
+//                             frontrun_exec_result = true;
+//                             if c != None {
+//                                 //revert to orignal state
+//                                 state.revert_to_checkpoint();
+//                                 state.checkpoint();
+//                                 is_state_checkpoint_revert = true;
+//                                 //Execute two/one transaction(s) if failed, revert them.
+//                                 if let Some(a_tx) = a.clone() {
+//                                     // self.front_run_transactions.push(a_tx.clone());
+
+//                                     //flash loan mining testing
+//                                     //add balance to front run address
+//                                     let balance = state.balance(&FRONTRUN_ADDRESS).unwrap();
+//                                     let needed_balance = a_tx
+//                                         .tx()
+//                                         .value
+//                                         .saturating_add(a_tx.tx().gas.saturating_mul(a_tx.tx().gas_price));
+//                                     if balance < needed_balance {
+//                                         // give the sender a sufficient balance
+//                                         state
+//                                             .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty).unwrap();
+//                                     }
+//                                     let options = TransactOptions::with_no_tracing()
+//                                     .dont_check_nonce()
+//                                     .save_output_from_contract();
+//                                     if let Ok(outcome_a) = state.execute(env_info, machine, &a_tx, options, false){
+                                        
+//                                     }else{
+//                                         frontrun_exec_result = false;
+//                                     }
+//                                 }
+//                                 if frontrun_exec_result {
+//                                     let new_init_call_tx = c.clone().unwrap();
+//                                     //flash loan mining testing
+//                                     //add balance to front run address
+//                                     let balance = state.balance(&FRONTRUN_ADDRESS).unwrap();
+//                                     let needed_balance = new_init_call_tx
+//                                         .tx()
+//                                         .value
+//                                         .saturating_add(new_init_call_tx.tx().gas.saturating_mul(new_init_call_tx.tx().gas_price));
+//                                     if balance < needed_balance {
+//                                         // give the sender a sufficient balance
+//                                         state
+//                                             .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty).unwrap();
+//                                     }
+//                                     let options = TransactOptions::with_no_tracing()
+//                                     .dont_check_nonce()
+//                                     .save_output_from_contract();
+//                                     if let Ok(outcome_c) = state.execute(env_info, machine, &new_init_call_tx, options, false){
+                                        
+//                                     }else{
+//                                         frontrun_exec_result = false;
+//                                     }
+//                                 }
+//                                 // if frontrun_exec_result {
+//                                 //     //case: https://etherscan.io/tx/0x0fc6d2ca064fc841bc9b1c1fad1fbb97bcea5c9a1b2b66ef837f1227e06519a6
+//                                 //     use types::transaction::{Transaction as RawTransaction, Action, SignedTransaction, TypedTransaction, 
+//                                 //         //UnverifiedTransaction,
+//                                 //     };use std::str::FromStr;
+//                                 //     use crate::{
+//                                 //         crypto::publickey::Secret,
+//                                 //     };
+//                                 //     // use ethereum_types::H256;
+//                                 //     let d_tx = TypedTransaction::Legacy(RawTransaction {
+//                                 //         action: Action::Call(Address::from_str("c498b5eff1acbdf4d33bb47926cf4fbf04699045").unwrap()),
+//                                 //         nonce: b.clone().unwrap().tx().nonce.saturating_add(U256::from(1)),
+//                                 //         gas_price: U256::from_dec_str("525000000000").unwrap(),
+//                                 //         gas: U256::from_dec_str("12065986").unwrap(),
+//                                 //         value: U256::from_dec_str("0").unwrap(),
+//                                 //         data: ::rustc_hex::FromHex::from_hex("fdb57542").unwrap(), 
+//                                 //         })
+//                                 //         .sign(&Secret::copy_from_str("ad0ad85b628caae0aa45653da3e9910166376e0dd94b30696b5fa8327786c735").unwrap(), b.clone().unwrap().chain_id());
+//                                 //     //flash loan mining testing
+//                                 //     //add balance to front run address
+//                                 //     let balance = state.balance(&FRONTRUN_ADDRESS).unwrap();
+//                                 //     let needed_balance = d_tx
+//                                 //         .tx()
+//                                 //         .value
+//                                 //         .saturating_add(d_tx.tx().gas.saturating_mul(d_tx.tx().gas_price));
+//                                 //     if balance < needed_balance {
+//                                 //         // give the sender a sufficient balance
+//                                 //         state
+//                                 //             .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty).unwrap();
+//                                 //     }
+//                                 //     let options = TransactOptions::with_no_tracing()
+//                                 //     .dont_check_nonce()
+//                                 //     .save_output_from_contract();
+//                                 //     if let Ok(outcome_d) = state.execute(env_info, machine, &d_tx, options, false){
+                                        
+//                                 //     }else{
+//                                 //         frontrun_exec_result = false;
+//                                 //     }
+//                                 // }
+
+
+//                                 if frontrun_exec_result {
+//                                     let mut new_tx = b.clone().unwrap();
+//                                     if let Some(a_tx) = a.clone(){
+//                                         if let Action::Call(_) = a_tx.tx().action {
+//                                             let temp_contract_addresses = state.get_temp_created_addresses();
+//                                             if !temp_contract_addresses.is_empty() {
+//                                                 new_tx = AdversaryAccount::overwrite_new_tx(new_tx, *temp_contract_addresses.last().unwrap());
+//                                             }
+//                                             state.clear_contract_address();
+//                                         }
+//                                     }
+//                                     // self.front_run_transactions.push(new_tx.clone());
+//                                     new_tx = AdversaryAccount::overwrite_new_tx_nonce(new_tx, b.clone().unwrap().tx().nonce.saturating_add(U256::one()));
+//                                     //flash loan mining testing
+//                                     //add balance to front run address
+//                                     let balance = state.balance(&FRONTRUN_ADDRESS).unwrap();
+//                                     let needed_balance = new_tx
+//                                         .tx()
+//                                         .value
+//                                         .saturating_add(new_tx.tx().gas.saturating_mul(new_tx.tx().gas_price));
+//                                     if balance < needed_balance {
+//                                         // give the sender a sufficient balance
+//                                         state
+//                                             .add_balance(&FRONTRUN_ADDRESS, &(needed_balance - balance), CleanupMode::NoEmpty).unwrap();
+//                                     }
+//                                     // init a account in the state
+//                                     state.init_adversary_account_entry(
+//                                         new_tx.sender(), 
+//                                         new_tx.clone(),
+//                                         state.nonce(&FRONTRUN_ADDRESS).unwrap(), //Useless
+//                                     );
+//                                     let options = TransactOptions::with_no_tracing()
+//                                     .dont_check_nonce()
+//                                     .save_output_from_contract();
+//                                     if let Ok(outcome_b) = state.execute(env_info, machine, &new_tx, options, false){
+//                                         println!("Flash loan front run is executed. Now checking the beneficiary ...");
+//                                         if state.token_transfer_flash_loan_check(new_tx.sender(), false) {
+//                                             println!("Front run address {:?} succeed!", new_tx.sender());
+//                                             frontrun_exec_result = true;                           
+//                                         }else{
+//                                             frontrun_exec_result = false;
+//                                         }
+//                                     }else{
+//                                         frontrun_exec_result = false;
+//                                     }
+//                                     // remove the transaction in the state
+//                                     state.rm_adversary_account_entry(
+//                                         new_tx.sender(), 
+//                                         new_tx.clone(),
+//                                     );
+//                                 }
+
+//                                 if !frontrun_exec_result {
+                                    
+//                                 }else{
+//                                     new_potential_txs_count = 3;
+                                
+//                                 }
+//                             }else{
+//                                 println!("No init call found. Fail to retry");
+//                             }
+//                     }
+//                     }else{ //if b is none meaning no contract address is found in contractdb
+//                         frontrun_exec_result = false;
+//                     }
+//                 },
+//                 None => {panic!("Should never reach here!");},
+//             }
+//         }else{
+//             frontrun_exec_result = false;
+//         }
+//     }else{
+//         frontrun_exec_result = false;
+//         //For DEBUGGING print
+//         //self.block.state.token_transfer_flash_loan_check(t.sender(), false);
+//     }
+//     //TODO: comment out below without flash loan full node testing
+//     if !frontrun_exec_result {
+//         if is_state_checkpoint_revert {
+//             state.revert_to_checkpoint();
+//             let options = TransactOptions::with_no_tracing()
+//             .dont_check_nonce()
+//             .save_output_from_contract();
+//             outcome = state.execute(env_info, machine, &t, options, false).unwrap();
+//         }else{
+//             state.discard_checkpoint();
+//         }
+//     }else{
+//         println!("Transaction hash {:?} is replaced by front run", t.hash());
+//         state.discard_checkpoint();
+//         println!("Front run overhead {:?}", cp2.elapsed());
+//     }
+// }    
 /// Representation of the entire state of all accounts in the system.
 ///
 /// `State` can work together with `StateDB` to share account cache.
@@ -547,6 +939,15 @@ impl<B: Backend> State<B> {
         match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
             Some(val) => {
                 val.last().unwrap().1.get_txs()
+            },
+            None => None,
+        }        
+    }
+    /// get new transactions with init call
+    pub fn get_new_transactions_copy_init_call (&self, sender: Address) -> Option<(Option<SignedTransaction>, Option<SignedTransaction>, Option<SignedTransaction>)>{
+        match self.global_flash_loan_transaction_pool.borrow_mut().get_mut(&sender).map(|value| value) {
+            Some(val) => {
+                val.last().unwrap().1.get_txs_with_init_call()
             },
             None => None,
         }        
