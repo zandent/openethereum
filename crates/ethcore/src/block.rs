@@ -582,7 +582,7 @@ impl<'x> OpenBlock<'x> {
                                             if !temp_contract_addresses.is_empty() {
                                                 new_init_call_tx = AdversaryAccount::overwrite_new_tx(new_init_call_tx, *temp_contract_addresses.last().unwrap());
                                             }
-                                            self.block.state.clear_contract_address();
+                                            // self.block.state.clear_contract_address();
                                         }
                                     }
                                     if let Ok(outcome_c) = self.block.state.apply(
