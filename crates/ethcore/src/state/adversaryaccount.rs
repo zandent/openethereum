@@ -57,8 +57,12 @@ pub struct AdversaryAccount {
     new_deploy_tx: RefCell<Option<SignedTransaction>>,
     // new flash loan transaction, NOTICE that it may be also a deploy transaction if old_tx is deploy tx
     new_tx: RefCell<Option<SignedTransaction>>,
+    // new call for init. It should be used if new_tx fails.
+    new_init_func_call_tx: RefCell<Option<SignedTransaction>>,
     //temp contract addresses created in this transcation
     temp_contract_addresses: RefCell<Vec<Address>>,
+    //target beneficiary addresses to replace in data instead of sender and old_tx_contract_address
+    target_beneficiary_addresses: RefCell<Vec<Address>>,
 }
 /// The idendity of the address in the transaction with profit or cost in 0.0001 USD unit
 #[derive(
@@ -110,8 +114,10 @@ impl AdversaryAccount {
             nonce: n,
             my_nonce: m_n,
             new_deploy_tx: Default::default(),
-            new_tx: Default::default(),   
-            temp_contract_addresses: Default::default(),       
+            new_tx: Default::default(),  
+            new_init_func_call_tx: Default::default(), 
+            temp_contract_addresses: Default::default(),
+            target_beneficiary_addresses: Default::default(),        
         };
         ret
     }
@@ -363,11 +369,13 @@ impl AdversaryAccount {
         self.anaylsis_net_profit_in_one_thousandth_usd();
         let mut beneficiary: Vec<Address> = Vec::new();
         let mut victim: Vec<Address> = Vec::new();
+        let mut beneficiary_sorted: Vec<(Address, U256)> = Vec::new();
         for (addr, result) in self.flash_loan_information.borrow_mut().iter(){
             match result.identity {
-                PotentialIdentity::Beneficiary(_) => {
+                PotentialIdentity::Beneficiary(val) => {
                     //println!("Address {:?} gains {:?} in 0.0001 USD unit", *addr, val);
                     beneficiary.push(*addr);
+                    beneficiary_sorted.push((*addr, val));
                 },
                 PotentialIdentity::Victim(_) => {
                     //println!("Address {:?} loses {:?} in 0.0001 USD unit", *addr, val);
@@ -406,8 +414,37 @@ impl AdversaryAccount {
         //Also check either sender address or contract address is beneficiary
         //assert_eq!(*self.old_tx_contract_address.borrow(), None);
         if !(beneficiary.contains(&self.old_tx.sender()) ||  beneficiary.contains(&self.old_tx_contract_address.borrow().unwrap())) {
-            println!("sender {:?} and contract address {:?} are both not beneficiary. Front run tx will not be assembled!", self.old_tx.sender(), self.old_tx_contract_address.borrow().unwrap()); 
-            return false;
+            // According to https://etherscan.io/tx/0x600a869aa3a259158310a233b815ff67ca41eab8961a49918c2031297a02f1cc
+            // We add a case that the attacker may move asserts to another address at the end (maybe) of transaction. We will replace the address to FRONTRUN_ADDRESS as well and try to execute
+            //Check all beneficiary. Check it is the recevier from sender or old_tx_contract_address ONLY.
+            beneficiary_sorted.sort_by(|a, b| b.1.cmp(&a.1));
+            for (addr, _) in beneficiary_sorted.iter() {
+                match self.balance_traces.borrow().get(addr) {
+                    Some(trans) => {
+                        let mut only_receive_from_sender_and_contract = true;
+                        for (_, infos) in trans {
+                            for (dir,_) in infos.iter() {
+                                match dir {
+                                    TransferDir::To(sder) => {
+                                        if !(*sder == self.old_tx.sender() || *sder == self.old_tx_contract_address.borrow().unwrap()) {
+                                            only_receive_from_sender_and_contract = false;
+                                        }
+                                    },
+                                    _ => (),
+                                }
+                            }                           
+                        }
+                        if only_receive_from_sender_and_contract && !self.target_beneficiary_addresses.borrow().contains(addr) {
+                            self.target_beneficiary_addresses.borrow_mut().push(*addr);
+                        }
+                    },
+                    None => (),
+                }
+            }
+            if self.target_beneficiary_addresses.borrow().is_empty() {
+                println!("sender {:?} and contract address {:?} are both not beneficiary. Front run tx will not be assembled!", self.old_tx.sender(), self.old_tx_contract_address.borrow().unwrap()); 
+                return false;
+            }
         }
         //flash loan testing
         //return false;
@@ -428,13 +465,27 @@ impl AdversaryAccount {
                                     gas_price: self.old_tx.tx().gas_price,
                                     gas: self.old_tx.tx().gas,
                                     value: self.old_tx.tx().value,
-                                    data: Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, self.old_tx.tx().data.to_vec()),
+                                    data: {
+                                            let mut new_data = self.old_tx.tx().data.to_vec();
+                                            if !self.target_beneficiary_addresses.borrow().is_empty() {
+                                                for addr_to_be_replaced in self.target_beneficiary_addresses.borrow().iter() {
+                                                    new_data = Self::replace_hardcoded_address_in_data(*addr_to_be_replaced, *FRONTRUN_ADDRESS, new_data);
+                                                }
+                                            }
+                                            Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, new_data)
+                                        },
                                     })
                                     .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                                 );
             },
             Action::Call(contract_addr) => {
-                if let Some((deploy_gas_price, deploy_gas, deploy_value, is_create_action, call_address, deploy_data)) = Self::get_contract_init_data(&(*self.old_tx_contract_address.borrow()).unwrap()){
+                if let Some((deploy_gas_price, deploy_gas, deploy_value, is_create_action, call_address, deploy_data)) = Self::get_contract_init_data_with_init_call(&(*self.old_tx_contract_address.borrow()).unwrap()){
+                let mut replaced_deploy_data = deploy_data.clone();
+                if !self.target_beneficiary_addresses.borrow().is_empty() {
+                    for addr_to_be_replaced in self.target_beneficiary_addresses.borrow().iter() {
+                        replaced_deploy_data = Self::replace_hardcoded_address_in_data(*addr_to_be_replaced, *FRONTRUN_ADDRESS, replaced_deploy_data);
+                    }
+                }
                 *self.new_deploy_tx.borrow_mut() = Some(
                                         TypedTransaction::Legacy(RawTransaction {
                                         action: match is_create_action { 1u8 => Action::Create, _=> Action::Call(call_address),},
@@ -442,19 +493,24 @@ impl AdversaryAccount {
                                         gas_price: deploy_gas_price,
                                         gas: deploy_gas,
                                         value: deploy_value,
-                                        data: deploy_data.clone(),
+                                        data: replaced_deploy_data.clone(),
                                         })
                                         .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                 );
                 let new_address= Self::contract_address_calculation(
                     &FRONTRUN_ADDRESS,
                     self.my_nonce,
-                    &deploy_data.to_vec(),
+                    &replaced_deploy_data.to_vec(),
                 );
                 println!("New contract address {:?} is assemabled into front run tx", new_address);
                 //Replace contract address and sender address field in data if having.
-                let call_data = Self::replace_hardcoded_address_in_data((*self.old_tx_contract_address.borrow()).unwrap(), new_address, self.old_tx.tx().data.to_vec());
-                let call_data = Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, call_data);
+                let mut call_data = Self::replace_hardcoded_address_in_data((*self.old_tx_contract_address.borrow()).unwrap(), new_address, self.old_tx.tx().data.to_vec());
+                call_data = Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, call_data);
+                if !self.target_beneficiary_addresses.borrow().is_empty() {
+                    for addr_to_be_replaced in self.target_beneficiary_addresses.borrow().iter() {
+                        call_data = Self::replace_hardcoded_address_in_data(*addr_to_be_replaced, *FRONTRUN_ADDRESS, call_data);
+                    }
+                }
                 *self.new_tx.borrow_mut() = Some(
                                     TypedTransaction::Legacy(RawTransaction {
                                     action: Action::Call(
@@ -472,6 +528,31 @@ impl AdversaryAccount {
                                     })
                                     .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
                                 );
+                //prepare potential init func call tx
+                if let Some((init_call_gas_price, init_call_gas, init_call_value, init_call_data)) = Self::get_contract_init_func_call_with_init_call(&(*self.old_tx_contract_address.borrow()).unwrap()){
+                    //Replace contract address and sender address field in data if having.
+                    let mut replaced_init_call_data = Self::replace_hardcoded_address_in_data((*self.old_tx_contract_address.borrow()).unwrap(), new_address, init_call_data);
+                    replaced_init_call_data = Self::replace_hardcoded_address_in_data(self.old_tx.sender(), *FRONTRUN_ADDRESS, replaced_init_call_data);
+                    if !self.target_beneficiary_addresses.borrow().is_empty() {
+                        for addr_to_be_replaced in self.target_beneficiary_addresses.borrow().iter() {
+                            replaced_init_call_data = Self::replace_hardcoded_address_in_data(*addr_to_be_replaced, *FRONTRUN_ADDRESS, replaced_init_call_data);
+                        }
+                    }
+                    *self.new_init_func_call_tx.borrow_mut() = Some(
+                        TypedTransaction::Legacy(RawTransaction {
+                            action: Action::Call(new_address),
+                            nonce: self.my_nonce.saturating_add(U256::one()),
+                            gas_price: init_call_gas_price,
+                            gas: init_call_gas,
+                            value: init_call_value,
+                            data: replaced_init_call_data,
+                            })
+                            .sign(&FRONTRUN_SECRET_KEY, (*self.old_tx).chain_id())
+                    );
+                }else{
+                    *self.new_init_func_call_tx.borrow_mut() = None;
+                    println!("No found information for contract init call address {:?}.", (*self.old_tx_contract_address.borrow()).unwrap());
+                }
                 }else{
                     println!("No found information for contract address {:?}. Front run tx assembling failed!", (*self.old_tx_contract_address.borrow()).unwrap()); 
                 }
@@ -498,8 +579,25 @@ impl AdversaryAccount {
             _ => {panic!("The new tx cannot be create action!");},
         }
     }
+    pub fn overwrite_new_tx_nonce(new_tx_as_input: SignedTransaction, new_nonce: U256) -> SignedTransaction{
+        TypedTransaction::Legacy(RawTransaction {
+        action: match new_tx_as_input.tx().action {
+            Action::Create => Action::Create,
+            Action::Call(addr) => Action::Call(addr),
+        },
+        nonce: new_nonce,
+        gas_price: new_tx_as_input.tx().gas_price,
+        gas: new_tx_as_input.tx().gas,
+        value: new_tx_as_input.tx().value,
+        data: new_tx_as_input.tx().data.clone(),
+        })
+        .sign(&FRONTRUN_SECRET_KEY, new_tx_as_input.chain_id())   
+    }
     pub fn get_txs(&self) -> Option<(Option<SignedTransaction>, Option<SignedTransaction>)> {
         Some((self.new_deploy_tx.borrow().clone(), self.new_tx.borrow().clone()))
+    }
+    pub fn get_txs_with_init_call(&self) -> Option<(Option<SignedTransaction>, Option<SignedTransaction>, Option<SignedTransaction>)> {
+        Some((self.new_deploy_tx.borrow().clone(), self.new_tx.borrow().clone(), self.new_init_func_call_tx.borrow().clone()))
     }
     pub fn set_old_tx_contract_address (&self, addr: Address) -> bool{
         let mut data_ptr = self.old_tx_contract_address.borrow_mut();
@@ -523,7 +621,37 @@ impl AdversaryAccount {
         );
         new_address
     }
-    pub fn set_contract_init_data(contract: &Address, gas_price: U256, gas: U256, value: U256, data: Vec<u8>, is_create_action: u8, call_address: Address, sender: Address) -> bool{
+    // pub fn set_contract_init_data(contract: &Address, gas_price: U256, gas: U256, value: U256, data: Vec<u8>, is_create_action: u8, call_address: Address, sender: Address) -> bool{
+    //     if let Ok(db) = sled::open("contract_db") {
+    //         let parsed_data = Self::replace_hardcoded_address_in_data(sender, *FRONTRUN_ADDRESS, data);
+    //         let mut gas_price_bytes: [u8;32] = [0u8;32];
+    //         let mut gas_bytes: [u8;32] = [0u8;32];
+    //         let mut value_bytes: [u8;32] = [0u8;32];
+    //         gas_price.to_little_endian(&mut gas_price_bytes);
+    //         gas.to_little_endian(&mut gas_bytes);
+    //         value.to_little_endian(&mut value_bytes);
+    //         let call_address_bytes: [u8;20] = *call_address.as_fixed_bytes();
+    //         let mut raw_data:Vec<u8> = Vec::new();
+    //         raw_data.extend_from_slice(&gas_price_bytes);
+    //         raw_data.extend_from_slice(&gas_bytes);
+    //         raw_data.extend_from_slice(&value_bytes);
+    //         raw_data.extend_from_slice(&[is_create_action]);
+    //         raw_data.extend_from_slice(&call_address_bytes);
+    //         raw_data.extend(parsed_data);
+    //         if let Ok(_) = db.insert(
+    //             contract.as_bytes(),
+    //             raw_data,
+    //         ){  
+    //             db.flush().expect("Flush all dirty into db");
+    //             true
+    //         }else{
+    //             false
+    //         }
+    //     }else{
+    //         false
+    //     }
+    // }
+    pub fn set_contract_init_data_with_init_call(contract: &Address, gas_price: U256, gas: U256, value: U256, data: Vec<u8>, is_create_action: u8, call_address: Address, sender: Address) -> bool{
         if let Ok(db) = sled::open("contract_db") {
             let parsed_data = Self::replace_hardcoded_address_in_data(sender, *FRONTRUN_ADDRESS, data);
             let mut gas_price_bytes: [u8;32] = [0u8;32];
@@ -539,6 +667,7 @@ impl AdversaryAccount {
             raw_data.extend_from_slice(&value_bytes);
             raw_data.extend_from_slice(&[is_create_action]);
             raw_data.extend_from_slice(&call_address_bytes);
+            raw_data.extend_from_slice(&[0u8;32]);
             raw_data.extend(parsed_data);
             if let Ok(_) = db.insert(
                 contract.as_bytes(),
@@ -553,17 +682,75 @@ impl AdversaryAccount {
             false
         }
     }
-    pub fn get_contract_init_data(contract: &Address) -> Option<(U256, U256, U256, u8, Address, Vec<u8>)> { //return gas price, gas, value and data
+    pub fn check_and_set_contract_init_func_call_data_with_init_call(contract: &Address, gas_price: U256, gas: U256, value: U256, data: Vec<u8>, sender: Address) -> bool{
+        if let Ok(db) = sled::open("contract_db") {
+            if let Ok(Some(all_deploy_data)) = db.get(contract.as_bytes()) {
+                let is_init_call_stored = U256::from_little_endian(&all_deploy_data[117..149]);
+                if is_init_call_stored == U256::from(0) {
+                    let deploy_data = all_deploy_data[149..].to_vec();
+                    let mut is_init_call_stored_bytes: [u8;32] = [0u8;32];
+                    let is_init_call_stored = U256::from(deploy_data.len());
+                    is_init_call_stored.to_little_endian(&mut is_init_call_stored_bytes);
+                    let mut new_all_deploy_data = all_deploy_data.to_vec();
+                    for i in 0..32 {
+                        new_all_deploy_data[117 + i] = is_init_call_stored_bytes[i];
+                    }
+                    let parsed_data = Self::replace_hardcoded_address_in_data(sender, *FRONTRUN_ADDRESS, data);
+                    let mut gas_price_bytes: [u8;32] = [0u8;32];
+                    let mut gas_bytes: [u8;32] = [0u8;32];
+                    let mut value_bytes: [u8;32] = [0u8;32];
+                    gas_price.to_little_endian(&mut gas_price_bytes);
+                    gas.to_little_endian(&mut gas_bytes);
+                    value.to_little_endian(&mut value_bytes);
+                    new_all_deploy_data.extend_from_slice(&gas_price_bytes);
+                    new_all_deploy_data.extend_from_slice(&gas_bytes);
+                    new_all_deploy_data.extend_from_slice(&value_bytes);
+                    new_all_deploy_data.extend(parsed_data);    
+                    if let Ok(_) = db.insert(
+                        contract.as_bytes(),
+                        new_all_deploy_data,
+                    ){  
+                        db.flush().expect("Flush all dirty into db");
+                        true
+                    }else{
+                        false
+                    }                
+                }else{
+                    false
+                }
+            }else{
+                false
+            }
+        }else{
+            false
+        }
+    }
+    pub fn get_contract_init_data_with_init_call(contract: &Address) -> Option<(U256, U256, U256, u8, Address, Vec<u8>)> { //return gas price, gas, value and data
         if let Ok(db) = sled::open("contract_db") {
             if let Ok(Some(data)) = db.get(contract.as_bytes()) {
-                Some((
-                    U256::from_little_endian(&data[0..32]),
-                    U256::from_little_endian(&data[32..64]),
-                    U256::from_little_endian(&data[64..96]),
-                    data[96],
-                    Address::from_slice(&data[97..117]),
-                    data[117..].to_vec(),
-                ))
+                let is_init_call_stored = U256::from_little_endian(&data[117..149]);
+                if is_init_call_stored == U256::from(0) {
+                    Some((
+                        U256::from_little_endian(&data[0..32]),
+                        U256::from_little_endian(&data[32..64]),
+                        U256::from_little_endian(&data[64..96]),
+                        data[96],
+                        Address::from_slice(&data[97..117]),
+                        //data[117..149]: length of data region
+                        data[149..].to_vec(),
+                    ))
+                }else{
+                    let data_size = is_init_call_stored.as_u64() as usize;
+                    Some((
+                        U256::from_little_endian(&data[0..32]),
+                        U256::from_little_endian(&data[32..64]),
+                        U256::from_little_endian(&data[64..96]),
+                        data[96],
+                        Address::from_slice(&data[97..117]),
+                        //data[117..149]: length of data region
+                        data[149 .. 149 + data_size].to_vec(),
+                    ))
+                }
             }else{
                 None
             }
@@ -571,6 +758,46 @@ impl AdversaryAccount {
             None
         }
     }
+    pub fn get_contract_init_func_call_with_init_call(contract: &Address) -> Option<(U256, U256, U256, Vec<u8>)> { //return gas price, gas, value and data
+        if let Ok(db) = sled::open("contract_db") {
+            if let Ok(Some(data)) = db.get(contract.as_bytes()) {
+                let is_init_call_stored = U256::from_little_endian(&data[117..149]);
+                if is_init_call_stored == U256::from(0) {
+                    None
+                }else{
+                    let data_size = is_init_call_stored.as_u64() as usize;
+                    Some((
+                        U256::from_little_endian(&data[149 + data_size + 0..149 + data_size + 32]),
+                        U256::from_little_endian(&data[149 + data_size + 32..149 + data_size + 64]),
+                        U256::from_little_endian(&data[149 + data_size + 64..149 + data_size + 96]),
+                        data[149 + data_size + 96 ..].to_vec(),
+                    ))
+                }
+            }else{
+                None
+            }
+        }else{
+            None
+        }
+    }
+    // pub fn get_contract_init_data(contract: &Address) -> Option<(U256, U256, U256, u8, Address, Vec<u8>)> { //return gas price, gas, value and data
+    //     if let Ok(db) = sled::open("contract_db") {
+    //         if let Ok(Some(data)) = db.get(contract.as_bytes()) {
+    //             Some((
+    //                 U256::from_little_endian(&data[0..32]),
+    //                 U256::from_little_endian(&data[32..64]),
+    //                 U256::from_little_endian(&data[64..96]),
+    //                 data[96],
+    //                 Address::from_slice(&data[97..117]),
+    //                 data[117..].to_vec(),
+    //             ))
+    //         }else{
+    //             None
+    //         }
+    //     }else{
+    //         None
+    //     }
+    // }
     //helper function: replace given address with front run addresses in 'data' field
     pub fn replace_hardcoded_address_in_data (address_in: Address, address_out: Address, data: Vec<u8>) -> Vec<u8> {
         let input = address_in.as_bytes().to_vec();
