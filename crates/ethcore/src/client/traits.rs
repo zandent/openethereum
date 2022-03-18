@@ -598,6 +598,14 @@ pub trait ProvingBlockChainClient: BlockChainClient {
     /// Returns a vector of raw trie nodes (in order from the root) proving the query.
     fn prove_account(&self, key1: H256, id: BlockId) -> Option<(Vec<Bytes>, BasicAccount)>;
 
+    //flash loan archive testing
+    ///virtual exec transaction
+    fn flash_loan_prove_transaction(
+        &self,
+        bnum: u64,
+        txhash: H256,
+        sder: Address,
+    );
     /// Prove execution of a transaction at the given block.
     /// Returns the output of the call and a vector of database items necessary
     /// to reproduce it.

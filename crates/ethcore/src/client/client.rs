@@ -327,6 +327,54 @@ impl Importer {
                 //     }
                 //     break;
                 // }
+                if header.number() == 12519007 + 2 || header.number() == 12519007 + 7 || header.number() == 12519007 + 12{
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(9484688, H256::from_str("b5c8bd9430b6cc87a0e2fe110ece6bf527fa4f170a4bc8cd032f768fc5219838").unwrap(),Address::from_str("148426fdc4c8a51b96b4bed827907b5fa6491ad0").unwrap(),);
+                    // println!("1 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(9504627, H256::from_str("762881b07feb63c436dee38edd4ff1f7a74c33091e534af56c9f7d49b5ecac15").unwrap(),Address::from_str("b8c6ad5fe7cb6cc72f2c4196dca11fbb272a8cbf").unwrap(),); 
+                    // println!("2 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(10356002, H256::from_str("eb008786a7d230180dbd890c76d6a7735430e836d55729a3ff6e22e254121192").unwrap(), Address::from_str("bf675c80540111a310b06e1482f9127ef4e7469a").unwrap(),);
+                    // println!("3 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(10355807, H256::from_str("013be97768b702fe8eccef1a40544d5ecb3c1961ad5f87fee4d16fdc08c78106").unwrap(), Address::from_str("bf675c80540111a310b06e1482f9127ef4e7469a").unwrap(),);
+                    // println!("4 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(10954411, H256::from_str("3503253131644dd9f52802d071de74e456570374d586ddd640159cf6fb9b8ad8").unwrap(), Address::from_str("223034edbe95823c1160c16f26e3000315171ca9").unwrap(),);
+                    // println!("5 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(11129474, H256::from_str("35f8d2f572fceaac9288e5d462117850ef2694786992a8c3f6d02612277b0877").unwrap(), Address::from_str("f224ab004461540778a914ea397c589b677e27bb").unwrap(),);
+                    // println!("6 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(11129500, H256::from_str("0fc6d2ca064fc841bc9b1c1fad1fbb97bcea5c9a1b2b66ef837f1227e06519a6").unwrap(), Address::from_str("f224ab004461540778a914ea397c589b677e27bb").unwrap(),);
+                    // println!("6.5 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(11272255, H256::from_str("e1c76241dda7c5fcf1988454c621142495640e708e3f8377982f55f8cf2a8401").unwrap(), Address::from_str("b77f7bbac3264ae7abc8aedf2ec5f4e7ca079f83").unwrap(),);
+                    // println!("7 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(11256673, H256::from_str("46a03488247425f845e444b9c10b52ba3c14927c687d38287c0faddc7471150a").unwrap(), Address::from_str("a773603b139ae1c52d05b35796df3ee76d8a9a2f").unwrap(),);
+                    // println!("8 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(11205648, H256::from_str("600a869aa3a259158310a233b815ff67ca41eab8961a49918c2031297a02f1cc").unwrap(), Address::from_str("882d72aaae187f54e85c7a0cb19dfec5316cd9aa").unwrap(),);
+                    // println!("9 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(11473330, H256::from_str("8bb8dc5c7c830bac85fa48acad2505e9300a91c3ff239c9517d0cae33b595090").unwrap(), Address::from_str("ebc6bd6ac2c9ad4adf4ba57e9f709b8b9cf03c40").unwrap(),);
+                    // println!("10 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(11792260, H256::from_str("f6022012b73770e7e2177129e648980a82aab555f9ac88b8a9cda3ec44b30779").unwrap(), Address::from_str("14ec0cd2acee4ce37260b925f74648127a889a28").unwrap(),);
+                    // println!("11 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(11242624, H256::from_str("4ec646d40205bb9caf92f86da911350abd764de51e154fce2771ea431020091c").unwrap(), Address::from_str("9f26ae5cd245bfeeb5926d61497550f79d9c6c1c").unwrap(),);
+                    // println!("12 Front run time {:?}", cp1.elapsed());
+                    // let cp1 = Instant::now();
+                    // client.flash_loan_prove_transaction(12419918, H256::from_str("7cc7d935d895980cdd905b2a134597fb91004b5d551d6db0fb265e3d9840da22").unwrap(), Address::from_str("07e02088d68229300ae503395c6536f09179dc3e").unwrap(),);
+                    // println!("13 Front run time {:?}", cp1.elapsed());
+                    let cp1 = Instant::now();
+                    client.flash_loan_prove_transaction(12865334, H256::from_str("00edd68087ee372a1b6e05249cc6c992bb7b8478cc0ddc70c2a1453428285808").unwrap(), Address::from_str("0333e323e61aa8afa38a1623604a165dcb9f4fec").unwrap(),);
+                    println!("14 Front run time {:?}", cp1.elapsed());
+                }
+                
                 let is_invalid = invalid_blocks.contains(header.parent_hash());
                 if is_invalid {
                     debug!(
@@ -3130,6 +3178,48 @@ impl ProvingBlockChainClient for Client {
     ) -> Option<(Vec<Bytes>, ::types::basic_account::BasicAccount)> {
         self.state_at(id)
             .and_then(move |state| state.prove_account(key1).ok())
+    }
+
+    //flash loan archive testing
+    ///virtual execute one transaction
+    fn flash_loan_prove_transaction(
+        &self,
+        bnum: u64,
+        txhash: H256,
+        sder: Address,
+    ) {
+        let id = BlockId::Number(bnum - 1);
+        let (header, env_info) = match (self.block_header(id), self.env_info(id)) {
+            (Some(s), Some(e)) => (s, e),
+            _ => return,
+        };
+        if let Some(p_block) = self.block(BlockId::Number(bnum)) {
+            let transactions = p_block.transactions();
+            let transactions: Vec<UnverifiedTransaction> = transactions.into_iter().filter(
+                |tx| tx.hash() == txhash
+            ).collect();
+            match transactions.len() {
+                1 =>{
+                    let transaction = SignedTransaction {
+                        transaction: transactions[0].clone().compute_hash(),
+                        sender: sder,
+                        public: None,
+                    };
+                    let mut jdb = self.state_db.read().journal_db().boxed_clone();
+        
+                    state::execute_transaction_virtual(
+                        jdb.as_hash_db_mut(),
+                        header.state_root().clone(),
+                        transaction,
+                        self.engine.machine(),
+                        &env_info,
+                        self.factories.clone(),
+                    );            
+                },
+                _ => (),
+            };
+
+        }
     }
 
     fn prove_transaction(

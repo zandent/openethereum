@@ -907,9 +907,9 @@ impl UnverifiedTransaction {
 /// A `UnverifiedTransaction` with successfully recovered `sender`.
 #[derive(Debug, Clone, Eq, PartialEq, MallocSizeOf)]
 pub struct SignedTransaction {
-    transaction: UnverifiedTransaction,
-    sender: Address,
-    public: Option<Public>,
+    pub transaction: UnverifiedTransaction,
+    pub sender: Address,
+    pub public: Option<Public>,
 }
 
 impl Deref for SignedTransaction {
