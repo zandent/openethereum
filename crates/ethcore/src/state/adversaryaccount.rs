@@ -434,6 +434,10 @@ impl AdversaryAccount {
                                 }
                             }                           
                         }
+                        match FLASH_LOAN_CONTRACT_ADDRESSES.iter().position(|val| *val == *addr) {
+                            Some(_) => only_receive_from_sender_and_contract = false,
+                            None => (),
+                        }
                         if only_receive_from_sender_and_contract && !self.target_beneficiary_addresses.borrow().contains(addr) {
                             self.target_beneficiary_addresses.borrow_mut().push(*addr);
                         }
