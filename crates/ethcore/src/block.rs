@@ -61,7 +61,7 @@ use types::{
 use state::frontrunmacro::*;
 use state::AdversaryAccount;
 //flash loan testing
-use state::CleanupMode;
+// use state::CleanupMode;
 
 //use call_contract::CallContract;
 // use client::{
